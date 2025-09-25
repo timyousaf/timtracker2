@@ -1,0 +1,14 @@
+{
+  "name": "timtracker2",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @timtracker/web",
+    "dev": "npm run dev -w @timtracker/web",
+    "start": "npm run start -w @timtracker/web"
+  }
+}
+
+
