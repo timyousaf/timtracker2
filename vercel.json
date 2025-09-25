@@ -1,0 +1,11 @@
+{
+  "installCommand": "npm install --no-audit --no-fund",
+  "buildCommand": "npm run build -w @timtracker/web",
+  "framework": "nextjs",
+  "outputDirectory": "apps/web/.next",
+  "env": {
+    "NEXT_TELEMETRY_DISABLED": "1"
+  }
+}
+
+
