@@ -1,20 +1,9 @@
 {
+  "installCommand": "npm install --no-audit --no-fund",
   "buildCommand": "npm run build -w @timtracker/web",
-  "installCommand": "npm config set registry https://registry.npmjs.org/ && npm config delete //registry.npmjs.org/:_authToken || true && npm config delete //npm.pkg.github.com/:_authToken || true && npm config set always-auth false && echo '--- npm config (short) ---' && npm config get registry && echo '--- npm ping ---' && npm ping --registry=https://registry.npmjs.org/ || true && npm install --no-audit --no-fund --registry=https://registry.npmjs.org/",
   "framework": "nextjs",
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD || exit 1",
   "env": {
-    "NEXT_TELEMETRY_DISABLED": "1",
-    "NPM_CONFIG_REGISTRY": "https://registry.npmjs.org/",
-    "NPM_CONFIG_ALWAYS_AUTH": "false",
-    "NPM_TOKEN": ""
-  },
-  "build": {
-    "env": {
-      "NPM_CONFIG_REGISTRY": "https://registry.npmjs.org/",
-      "NPM_CONFIG_ALWAYS_AUTH": "false",
-      "NPM_TOKEN": ""
-    }
+    "NEXT_TELEMETRY_DISABLED": "1"
   }
 }
 
