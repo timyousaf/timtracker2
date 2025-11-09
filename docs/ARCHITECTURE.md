@@ -2,7 +2,7 @@
 
 ## System Overview
 
-TimTracker2 is a Next.js application using the App Router pattern with Clerk for authentication. The application follows a server-side rendering approach with API routes for backend functionality.
+TimTracker2 is a Next.js application using the App Router pattern with Clerk for authentication and Neon (PostgreSQL) for data storage. The application follows a server-side rendering approach with API routes for backend functionality.
 
 ## Application Structure
 
@@ -21,8 +21,12 @@ app/
 ├── layout.tsx          # Root layout with ClerkProvider
 ├── page.tsx            # Home page (public)
 ├── api/
-│   └── hello/
-│       └── route.ts    # Example API route
+│   ├── hello/
+│   │   └── route.ts    # Example public API route
+│   └── health-metrics/
+│       └── route.ts    # Protected API route for health metrics
+├── health-metrics/
+│   └── page.tsx        # Health metrics page (protected)
 ├── sign-in/
 │   └── [[...sign-in]]/ # Clerk catch-all sign-in route
 │       └── page.tsx
@@ -30,6 +34,13 @@ app/
     └── [[...sign-up]]/ # Clerk catch-all sign-up route
         └── page.tsx
 ```
+
+### Database Layer
+
+The `lib/db.ts` file provides a connection pool to the Neon PostgreSQL database:
+- Uses `pg` (node-postgres) for database connectivity
+- Implements connection pooling for serverless environments
+- Configured with SSL for secure connections
 
 ### Component Architecture
 
@@ -70,6 +81,7 @@ graph TD
 ### Current API Routes
 
 - `GET /api/hello` - Example public API endpoint
+- `GET /api/health-metrics` - Protected endpoint that queries Neon database for Apple Health metrics
 
 ### API Route Pattern
 
@@ -87,6 +99,7 @@ export async function GET(request: Request) {
 
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Public Clerk key (exposed to client)
 - `CLERK_SECRET_KEY` - Secret Clerk key (server-only)
+- `NEON_DATABASE_URL` - Neon PostgreSQL connection string (server-only)
 
 ### Configuration Files
 
@@ -105,21 +118,25 @@ graph LR
     
     F[Environment Variables] -->|Configured In| B
     G[Clerk Service] -->|Auth Requests| D
+    H[Neon Database] -->|Queries| D
 ```
 
 ## Future Considerations
 
-- Database integration (PostgreSQL, MongoDB, etc.)
 - State management (if needed: Zustand, Redux, etc.)
 - API layer abstraction (tRPC, GraphQL, REST)
 - Real-time features (WebSockets, Server-Sent Events)
 - File storage (S3, Cloudinary, etc.)
+- Additional database tables and queries
+- Data visualization and charts
 
 ## Security Considerations
 
 1. **Authentication**: All protected routes verified via Clerk middleware
 2. **API Routes**: Should verify auth tokens even if behind middleware
-3. **Environment Variables**: Never commit secrets, use Vercel env vars
-4. **CORS**: Configure appropriately for API routes if needed
-5. **Rate Limiting**: Consider adding for API routes in production
+3. **Database Access**: All database queries are server-side only, never exposed to client
+4. **Database Connections**: Use connection pooling with SSL for secure database access
+5. **Environment Variables**: Never commit secrets, use Vercel env vars
+6. **CORS**: Configure appropriately for API routes if needed
+7. **Rate Limiting**: Consider adding for API routes in production
 

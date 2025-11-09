@@ -11,6 +11,7 @@ TimTracker2 is a modern web application for tracking time, built as a monorepo u
 - **Frontend Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript
 - **Authentication**: Clerk
+- **Database**: Neon (PostgreSQL)
 - **Monorepo**: npm workspaces
 - **Deployment**: Vercel
 
@@ -22,11 +23,15 @@ timtracker2/
 │   └── web/                    # Next.js web application
 │       ├── app/                # App Router pages and routes
 │       │   ├── api/            # API routes
+│       │   │   └── health-metrics/  # Health metrics API
+│       │   ├── health-metrics/ # Health metrics page (protected)
 │       │   ├── sign-in/        # Clerk sign-in pages
 │       │   ├── sign-up/        # Clerk sign-up pages
 │       │   ├── layout.tsx      # Root layout with ClerkProvider
 │       │   └── page.tsx        # Home page
 │       ├── middleware.ts       # Authentication middleware
+│       ├── lib/                # Utility libraries
+│       │   └── db.ts           # Database connection pool
 │       └── package.json
 ├── docs/                       # Documentation
 │   ├── ARCHITECTURE.md         # System architecture
@@ -42,6 +47,7 @@ timtracker2/
 
 - Node.js 18+ and npm
 - Clerk account (for authentication)
+- Neon account (for database)
 
 ### Installation
 
@@ -50,8 +56,7 @@ timtracker2/
 npm install
 
 # Set up environment variables (see Environment Variables section below)
-cp apps/web/.env.example apps/web/.env.local
-# Edit .env.local with your Clerk keys
+# Create apps/web/.env.local with your credentials
 ```
 
 ### Development
