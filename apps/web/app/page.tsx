@@ -17,9 +17,16 @@ export default function Page() {
       </SignedOut>
 
       <SignedIn>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <UserButton afterSignOutUrl="/" />
-          <span>You are signed in.</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <UserButton afterSignOutUrl="/" />
+            <span>You are signed in.</span>
+          </div>
+          <div>
+            <Link href="/health-metrics" style={{ color: '#0066cc' }}>
+              View Health Metrics →
+            </Link>
+          </div>
         </div>
       </SignedIn>
     </main>

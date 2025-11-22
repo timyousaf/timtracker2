@@ -2,7 +2,7 @@
 
 ## Project Context
 
-This is a Next.js 14 application using the App Router pattern with Clerk authentication, TypeScript, and deployed on Vercel.
+This is a Next.js 14 application using the App Router pattern with Clerk authentication, Neon (PostgreSQL) database, TypeScript, and deployed on Vercel.
 
 ## Code Style & Conventions
 
@@ -19,6 +19,7 @@ This is a Next.js 14 application using the App Router pattern with Clerk authent
 - Layouts: `app/[route]/layout.tsx`
 - Components: Co-locate with pages or create `components/` directory
 - Types: Co-locate with usage or create `types/` directory
+- Utilities: `lib/[utility].ts` (e.g., `lib/db.ts` for database connections)
 
 ## Authentication Patterns
 
@@ -120,18 +121,42 @@ export function ClientComponent() {
 }
 ```
 
+### Database Query Pattern
+```typescript
+// app/api/data/route.ts
+import { auth } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+import { getPool } from '@/lib/db';
+
+export async function GET() {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  
+  const pool = getPool();
+  const result = await pool.query('SELECT * FROM table_name LIMIT 10');
+  return NextResponse.json({ data: result.rows });
+}
+```
+
 ## Dependencies
 
 - **Next.js 14**: Core framework
 - **Clerk**: Authentication
+- **pg**: PostgreSQL client for Neon database
 - **TypeScript**: Type safety
 - **React 18**: UI library
 
 ## Environment Variables
 
-- Always check `apps/web/README.md` for required env vars
+- Always check `README.md` for required env vars
 - Never hardcode secrets
 - Use `NEXT_PUBLIC_` prefix only for client-accessible variables
+- Required variables:
+  - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Clerk public key (client-accessible)
+  - `CLERK_SECRET_KEY` - Clerk secret key (server-only)
+  - `NEON_DATABASE_URL` - Neon PostgreSQL connection string (server-only)
 
 ## Git Workflow
 
