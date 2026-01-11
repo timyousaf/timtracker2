@@ -2,31 +2,35 @@
 
 ## Project Context
 
-Next.js 14 App Router with Clerk auth, Neon PostgreSQL, TypeScript, deployed on Vercel.
+Monorepo with:
+- **apps/api**: Next.js 14 API server (Clerk auth, Neon PostgreSQL)
+- **apps/expo**: Expo React Native app (web + iOS, Clerk auth)
+- **packages/shared**: Shared TypeScript types
+
+Deployed on Vercel (API + web) and TestFlight (iOS).
 
 For environment variables, see `README.md`.
 
 ## Code Style
 
 - TypeScript strict mode
-- Server components by default; `'use client'` only when needed
 - Functional components with TypeScript interfaces for props
 
-## File Conventions
+### API App (apps/api)
+- Server components by default; `'use client'` only when needed
+- API routes in `app/api/[route]/route.ts`
 
-- Pages: `app/[route]/page.tsx`
-- API Routes: `app/api/[route]/route.ts`
-- Layouts: `app/[route]/layout.tsx`
-- Utilities: `lib/[utility].ts`
+### Expo App (apps/expo)
+- React Native components with StyleSheet
+- File-based routing via expo-router in `app/`
+- Use `@clerk/clerk-expo` for auth
 
 ## Authentication Patterns
 
-- **Route Protection**: Check `middleware.ts` before adding routes
-- **Public Routes**: Add to `isPublicRoute` matcher in `middleware.ts`
-
-### Server Component / API Route
+### API Route (apps/api)
 ```typescript
 import { auth } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 
 const { userId } = await auth();
 if (!userId) {
@@ -34,15 +38,20 @@ if (!userId) {
 }
 ```
 
-### Client Component
+### Expo Component (apps/expo)
 ```typescript
-'use client';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth } from '@clerk/clerk-expo';
 
-const { userId, isLoaded } = useAuth();
+const { userId, isLoaded, getToken } = useAuth();
+
+// For API calls, get the token:
+const token = await getToken();
+fetch('/api/endpoint', {
+  headers: { Authorization: `Bearer ${token}` }
+});
 ```
 
-## Database Pattern
+## Database Pattern (API only)
 
 ```typescript
 import { getPool } from '@/lib/db';
@@ -51,13 +60,21 @@ const pool = getPool();
 const result = await pool.query('SELECT * FROM table_name LIMIT 10');
 ```
 
+## Shared Types
+
+Define types in `packages/shared/src/types.ts` and import:
+```typescript
+import type { HealthMetric } from '@timtracker/shared';
+```
+
 ## API Route Template
 
 ```typescript
-// app/api/[route]/route.ts
+// apps/api/app/api/[route]/route.ts
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { getPool } from '@/lib/db';
+import type { SomeType } from '@timtracker/shared';
 
 export async function GET() {
   const { userId } = await auth();
@@ -74,9 +91,10 @@ export async function GET() {
 ## When Adding Features
 
 1. Check existing patterns in the codebase
-2. Update `middleware.ts` if adding routes
-3. Create PRD in `docs/PRDs/` for major features
-4. Update `ARCHITECTURE.md` for architectural changes
+2. Update `apps/api/middleware.ts` if adding API routes
+3. Add shared types to `packages/shared/src/types.ts`
+4. Create PRD in `docs/PRDs/` for major features
+5. Update `docs/ARCHITECTURE.md` for architectural changes
 
 ## Error Handling
 
@@ -84,8 +102,20 @@ export async function GET() {
 - Appropriate HTTP status codes
 - User-friendly error messages
 
-## Performance
+## File Structure
 
-- Use Next.js Image component
-- React Suspense for async components
-- Check bundle size on imports
+```
+timtracker2/
+├── apps/
+│   ├── api/              # Next.js API server
+│   │   ├── app/api/      # API routes
+│   │   ├── lib/db.ts     # Database connection
+│   │   └── middleware.ts # Auth middleware
+│   └── expo/             # Expo app (web + iOS)
+│       ├── app/          # Expo Router screens
+│       ├── components/   # React Native components
+│       └── lib/          # API client, utilities
+├── packages/
+│   └── shared/           # Shared TypeScript types
+└── docs/                 # Documentation
+```

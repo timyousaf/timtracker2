@@ -2,13 +2,20 @@
   "name": "timtracker2",
   "private": true,
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w @timtracker/web",
-    "dev": "npm run dev -w @timtracker/web",
-    "start": "npm run start -w @timtracker/web"
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:expo\"",
+    "dev:api": "npm run dev -w @timtracker/api",
+    "dev:expo": "npm run dev -w @timtracker/expo",
+    "dev:web": "npm run dev:web -w @timtracker/expo",
+    "build": "npm run build:expo && npm run build:api",
+    "build:api": "npm run build -w @timtracker/api",
+    "build:expo": "npm run build:web -w @timtracker/expo",
+    "start": "npm run start -w @timtracker/api"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
   }
 }
-
-

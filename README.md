@@ -1,6 +1,6 @@
 # TimTracker2
 
-A personal health tracking application built with Next.js, Clerk authentication, and Neon (PostgreSQL).
+A personal health tracking application with web and iOS apps, sharing the same API and authentication.
 
 ## Quick Start
 
@@ -8,24 +8,65 @@ A personal health tracking application built with Next.js, Clerk authentication,
 # Install dependencies
 npm install
 
-# Start development server
+# Start both API and Expo dev servers
 npm run dev
-# → http://localhost:3000
+
+# Or run separately:
+npm run dev:api   # API on http://localhost:3001
+npm run dev:expo  # Expo on http://localhost:8081
+```
+
+## Project Structure
+
+```
+timtracker2/
+├── apps/
+│   ├── api/              # Next.js 14 API server
+│   │   ├── app/api/      # API routes
+│   │   ├── lib/db.ts     # Database connection
+│   │   └── middleware.ts # Auth middleware
+│   └── expo/             # Expo app (web + iOS)
+│       ├── app/          # Expo Router screens
+│       ├── components/   # React Native components
+│       └── lib/          # API client, utilities
+├── packages/
+│   └── shared/           # Shared TypeScript types
+└── docs/                 # Documentation
 ```
 
 ## Environment Variables
 
-Create `apps/web/.env.local` with:
+### API (apps/api/.env.local)
 
 ```
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
 CLERK_SECRET_KEY=sk_...
 NEON_DATABASE_URL=postgresql://user:password@host/database?sslmode=require
 ```
 
+### Expo (apps/expo/.env)
+
+```
+EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
+EXPO_PUBLIC_API_URL=http://localhost:3001  # Only for local dev
+```
+
 Get credentials from [Clerk Dashboard](https://dashboard.clerk.com) and [Neon Console](https://console.neon.tech).
 
-For Vercel deployment, set these under Project Settings → Environment Variables.
+## Deployment
+
+### Web (Vercel)
+
+Two Vercel projects from this repo:
+1. **API**: Root directory `apps/api` → deploys to `timtracker-api.vercel.app`
+2. **Web**: Root directory `apps/expo` → deploys to your main domain
+
+### iOS (TestFlight)
+
+```bash
+cd apps/expo
+eas build --profile production --platform ios
+eas submit --platform ios
+```
 
 ## Documentation
 
@@ -33,18 +74,8 @@ For Vercel deployment, set these under Project Settings → Environment Variable
 - **[AI Rules](./.cursorrules)** — Guidelines for AI-assisted development
 - **[PRDs](./docs/PRDs/)** — Feature requirements and decision records
 
-## Project Structure
-
-```
-timtracker2/
-├── apps/web/          # Next.js 14 app (App Router)
-│   ├── app/           # Pages, layouts, API routes
-│   ├── lib/           # Utilities (db.ts, etc.)
-│   └── middleware.ts  # Auth route protection
-├── docs/              # Documentation
-└── vercel.json        # Deployment config
-```
-
 ## Tech Stack
 
-Next.js 14 (App Router) · TypeScript · Clerk · Neon PostgreSQL · Tailwind · Vercel
+- **API**: Next.js 14 (App Router) · TypeScript · Clerk · Neon PostgreSQL · Vercel
+- **App**: Expo SDK 52 · React Native · Expo Router · Clerk · TestFlight
+- **Shared**: TypeScript types
