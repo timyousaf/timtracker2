@@ -10,7 +10,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.timtracker.app"
+      "bundleIdentifier": "com.timtracker.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -36,8 +39,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": ""
+        "projectId": "181a2160-9e3a-44ed-ae0f-05f741d6170d"
       }
-    }
+    },
+    "owner": "audaciousaspen"
   }
 }
