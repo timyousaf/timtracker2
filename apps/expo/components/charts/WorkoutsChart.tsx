@@ -5,6 +5,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { EChart, echarts } from './EChart';
 import { ChartCard } from './ChartCard';
+import { colors, fontSizes } from '@/lib/theme';
 import type { WeeklyWorkoutsData } from '@timtracker/ui/types';
 
 interface WorkoutsChartProps {
@@ -12,9 +13,16 @@ interface WorkoutsChartProps {
   loading?: boolean;
 }
 
-const COLORS = [
-  '#8884d8', '#82ca9d', '#ffc658', '#ff7300', 
-  '#a4de6c', '#d0ed57', '#8dd1e1', '#83a6ed',
+// Shadcn-inspired chart color palette
+const CHART_COLORS = [
+  '#18181b', // zinc-900
+  '#3b82f6', // blue-500
+  '#22c55e', // green-500
+  '#f59e0b', // amber-500
+  '#8b5cf6', // violet-500
+  '#ec4899', // pink-500
+  '#06b6d4', // cyan-500
+  '#84cc16', // lime-500
 ];
 
 export function WorkoutsChart({ data, loading }: WorkoutsChartProps) {
@@ -29,7 +37,7 @@ export function WorkoutsChart({ data, loading }: WorkoutsChartProps) {
       stack: s.stack || 'total',
       data: s.data,
       itemStyle: {
-        color: COLORS[idx % COLORS.length],
+        color: CHART_COLORS[idx % CHART_COLORS.length],
       },
     }));
 
@@ -41,13 +49,13 @@ export function WorkoutsChart({ data, loading }: WorkoutsChartProps) {
         yAxisIndex: 1 as any,
         data: data.maxHeartRate as any,
         lineStyle: {
-          color: '#FF0000',
+          color: '#ef4444',
           type: 'dashed' as any,
         } as any,
         symbol: 'circle',
         symbolSize: 6,
         itemStyle: {
-          color: '#FF0000',
+          color: '#ef4444',
         },
       } as any);
     }
@@ -55,6 +63,13 @@ export function WorkoutsChart({ data, loading }: WorkoutsChartProps) {
     return {
       tooltip: {
         trigger: 'axis',
+        backgroundColor: colors.card,
+        borderColor: colors.border,
+        borderWidth: 1,
+        textStyle: {
+          color: colors.foreground,
+          fontSize: 12,
+        },
         formatter: (params: any) => {
           const items = Array.isArray(params) ? params : [params];
           const week = items[0]?.axisValue || '';
@@ -82,7 +97,10 @@ export function WorkoutsChart({ data, loading }: WorkoutsChartProps) {
       legend: {
         bottom: 0,
         type: 'scroll',
-        textStyle: { fontSize: 10 },
+        textStyle: { 
+          fontSize: 10,
+          color: colors.foregroundMuted,
+        },
       },
       grid: {
         left: 50,
@@ -93,23 +111,28 @@ export function WorkoutsChart({ data, loading }: WorkoutsChartProps) {
       xAxis: {
         type: 'category',
         data: data.categories,
+        axisLine: { lineStyle: { color: colors.border } },
         axisLabel: {
           rotate: 45,
           fontSize: 9,
+          color: colors.foregroundMuted,
         },
       },
       yAxis: [
         {
           type: 'value',
           name: 'Minutes',
-          axisLabel: { fontSize: 10 },
+          nameTextStyle: { color: colors.foregroundMuted },
+          splitLine: { lineStyle: { color: colors.border } },
+          axisLabel: { fontSize: 10, color: colors.foregroundMuted },
         },
         {
           type: 'value',
           name: 'HR',
           min: 0,
           max: 200,
-          axisLabel: { fontSize: 10 },
+          nameTextStyle: { color: colors.foregroundMuted },
+          axisLabel: { fontSize: 10, color: colors.foregroundMuted },
           splitLine: { show: false },
         },
       ],
@@ -141,7 +164,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   noDataText: {
-    color: '#666',
-    fontSize: 14,
+    color: colors.foregroundMuted,
+    fontSize: fontSizes.sm,
   },
 });

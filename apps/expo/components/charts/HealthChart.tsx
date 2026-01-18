@@ -6,6 +6,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { EChart, echarts } from './EChart';
 import { ChartCard } from './ChartCard';
+import { colors, fontSizes } from '@/lib/theme';
 import type { HealthChartDataPoint } from '@timtracker/ui/types';
 import { format, parseISO } from 'date-fns';
 
@@ -52,6 +53,13 @@ export function HealthChart({
     return {
       tooltip: {
         trigger: 'axis',
+        backgroundColor: colors.card,
+        borderColor: colors.border,
+        borderWidth: 1,
+        textStyle: {
+          color: colors.foreground,
+          fontSize: 12,
+        },
         formatter: (params: any) => {
           const point = Array.isArray(params) ? params[0] : params;
           const idx = point.dataIndex;
@@ -70,19 +78,23 @@ export function HealthChart({
       xAxis: {
         type: 'category',
         data: dates,
+        axisLine: { lineStyle: { color: colors.border } },
         axisLabel: {
           formatter: (value: string) => format(parseISO(value), 'M/d'),
           rotate: 45,
           fontSize: 10,
+          color: colors.foregroundMuted,
         },
       },
       yAxis: {
         type: 'value',
         min: yMin,
         max: yMax,
+        splitLine: { lineStyle: { color: colors.border } },
         axisLabel: {
           formatter: (value: number) => `${value}`,
           fontSize: 10,
+          color: colors.foregroundMuted,
         },
       },
       series: [
@@ -92,7 +104,7 @@ export function HealthChart({
           data: values,
           itemStyle: {
             color: color,
-            opacity: 0.7,
+            opacity: 0.8,
           },
           symbolSize: chartType === 'scatter' ? 8 : undefined,
         },
@@ -102,11 +114,11 @@ export function HealthChart({
           data: movingAvg,
           smooth: true,
           lineStyle: {
-            color: color,
+            color: colors.foreground,
             width: 2,
           },
           itemStyle: {
-            color: color,
+            color: colors.foreground,
           },
           symbol: 'none',
         },
@@ -138,7 +150,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   noDataText: {
-    color: '#666',
-    fontSize: 14,
+    color: colors.foregroundMuted,
+    fontSize: fontSizes.sm,
   },
 });

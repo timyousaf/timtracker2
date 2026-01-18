@@ -1,10 +1,12 @@
 /**
  * Calendar heatmap using ECharts
+ * Shadcn-inspired styling
  */
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { EChart, echarts } from './EChart';
 import { ChartCard } from './ChartCard';
+import { colors, fontSizes, fonts, spacing, borderRadius } from '@/lib/theme';
 import type { CalendarHeatmapData } from '@timtracker/ui/types';
 
 interface CalendarHeatmapProps {
@@ -39,15 +41,22 @@ export function CalendarHeatmap({
     // Transform data for ECharts calendar
     const heatmapData = data.points.map(p => [p.date, p.value ?? 0]);
     const maxValue = Math.max(...data.points.map(p => p.value ?? 0), 1);
-    const mainColor = uniformColor || (colorScale ? colorScale[1] : '#4CAF50');
+    const mainColor = uniformColor || (colorScale ? colorScale[1] : '#22c55e'); // green-500
 
     // Get actual ISO date range from points (sorted)
     const dates = data.points.map(p => p.date).sort();
-    const startDate = dates[0]; // ISO format like "2024-12-15"
+    const startDate = dates[0];
     const endDate = dates[dates.length - 1];
 
     return {
       tooltip: {
+        backgroundColor: colors.card,
+        borderColor: colors.border,
+        borderWidth: 1,
+        textStyle: {
+          color: colors.foreground,
+          fontSize: 12,
+        },
         formatter: (params: any) => {
           const [date, value] = params.data;
           const point = data.points.find(p => p.date === date);
@@ -86,27 +95,27 @@ export function CalendarHeatmap({
         min: 0,
         max: maxValue,
         inRange: {
-          color: ['#ffffff', mainColor],
+          color: [colors.backgroundSubtle, mainColor],
         },
       },
       calendar: {
-        orient: 'vertical', // Standard calendar: weeks as rows, weekdays as columns
-        top: 60,
-        left: 50,
-        right: 50,
+        orient: 'vertical',
+        top: 50,
+        left: 40,
+        right: 40,
         bottom: 20,
-        cellSize: [80, 45], // [width, height] for each cell
+        cellSize: [42, 42],
         range: [startDate, endDate],
         itemStyle: {
           borderWidth: 1,
-          borderColor: '#e0e0e0',
+          borderColor: colors.border,
         },
         dayLabel: {
-          firstDay: 0, // Start week on Sunday
-          margin: 10,
-          nameMap: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+          firstDay: 0,
+          margin: 8,
+          nameMap: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
           fontSize: 11,
-          color: '#666',
+          color: colors.foregroundMuted,
         },
         monthLabel: {
           show: false,
@@ -117,7 +126,7 @@ export function CalendarHeatmap({
         splitLine: {
           show: true,
           lineStyle: {
-            color: '#e0e0e0',
+            color: colors.border,
             width: 1,
           },
         },
@@ -134,7 +143,7 @@ export function CalendarHeatmap({
               return date.getDate().toString();
             },
             fontSize: 12,
-            color: '#333',
+            color: colors.foreground,
           },
         },
       ],
@@ -183,53 +192,50 @@ export function CalendarHeatmap({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing[4],
+    marginBottom: spacing[4],
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: spacing[2],
   },
   titleContainer: {
     alignItems: 'center',
     flex: 1,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#222',
+    fontSize: fontSizes.sm,
+    fontFamily: fonts.regular,
+    color: colors.foreground,
   },
   subtitle: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 2,
+    fontSize: fontSizes.xs,
+    color: colors.foregroundMuted,
+    marginTop: spacing[1],
   },
   navButton: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    borderColor: colors.borderInput,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
   },
   navButtonDisabled: {
     opacity: 0.5,
   },
   navButtonText: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: fontSizes.base,
+    color: colors.foreground,
   },
   navButtonTextDisabled: {
-    color: '#999',
+    color: colors.foregroundSubtle,
   },
   noData: {
     height: 150,
@@ -237,7 +243,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   noDataText: {
-    color: '#666',
-    fontSize: 14,
+    color: colors.foregroundMuted,
+    fontSize: fontSizes.sm,
   },
 });

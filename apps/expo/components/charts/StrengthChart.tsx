@@ -5,6 +5,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { EChart, echarts } from './EChart';
 import { ChartCard } from './ChartCard';
+import { colors, fontSizes } from '@/lib/theme';
 import type { StrengthVolumeData } from '@timtracker/ui/types';
 
 interface StrengthChartProps {
@@ -21,6 +22,13 @@ export function StrengthChart({ data, loading }: StrengthChartProps) {
     return {
       tooltip: {
         trigger: 'axis',
+        backgroundColor: colors.card,
+        borderColor: colors.border,
+        borderWidth: 1,
+        textStyle: {
+          color: colors.foreground,
+          fontSize: 12,
+        },
         formatter: (params: any) => {
           const point = Array.isArray(params) ? params[0] : params;
           const idx = point.dataIndex;
@@ -52,16 +60,20 @@ export function StrengthChart({ data, loading }: StrengthChartProps) {
       xAxis: {
         type: 'category',
         data: data.categories,
+        axisLine: { lineStyle: { color: colors.border } },
         axisLabel: {
           rotate: 45,
           fontSize: 9,
+          color: colors.foregroundMuted,
         },
       },
       yAxis: {
         type: 'value',
+        splitLine: { lineStyle: { color: colors.border } },
         axisLabel: {
           formatter: (value: number) => `${(value / 1000).toFixed(0)}k`,
           fontSize: 10,
+          color: colors.foregroundMuted,
         },
       },
       series: [
@@ -70,7 +82,7 @@ export function StrengthChart({ data, loading }: StrengthChartProps) {
           type: 'bar',
           data: data.series,
           itemStyle: {
-            color: '#8884d8',
+            color: '#8b5cf6', // violet-500
           },
         },
       ],
@@ -101,7 +113,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   noDataText: {
-    color: '#666',
-    fontSize: 14,
+    color: colors.foregroundMuted,
+    fontSize: fontSizes.sm,
   },
 });

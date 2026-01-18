@@ -5,6 +5,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import * as echarts from 'echarts/core';
+import { colors } from '@/lib/theme';
 import { LineChart, BarChart, ScatterChart, HeatmapChart } from 'echarts/charts';
 import {
   GridComponent,
@@ -95,7 +96,7 @@ export function EChart({ option, width, height = 300, style }: EChartProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
   },
 });
 

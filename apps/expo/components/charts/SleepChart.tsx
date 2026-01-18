@@ -6,6 +6,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { EChart, echarts } from './EChart';
 import { ChartCard } from './ChartCard';
+import { colors, fontSizes } from '@/lib/theme';
 import type { SleepDataPoint } from '@timtracker/ui/types';
 import { format, parseISO } from 'date-fns';
 
@@ -13,6 +14,14 @@ interface SleepChartProps {
   data: SleepDataPoint[];
   loading?: boolean;
 }
+
+// Sleep quality colors (keeping semantic meaning)
+const SLEEP_COLORS = {
+  poor: '#ef4444',    // red-500
+  fair: '#eab308',    // yellow-500
+  good: '#22c55e',    // green-500
+  line: '#18181b',    // zinc-900
+};
 
 export function SleepChart({ data, loading }: SleepChartProps) {
   const option = useMemo((): echarts.EChartsCoreOption => {
@@ -26,9 +35,9 @@ export function SleepChart({ data, loading }: SleepChartProps) {
 
     // Color based on hours
     const getColor = (h: number) => {
-      if (h < 6) return '#FF0000'; // Red
-      if (h < 7.5) return '#FFD700'; // Yellow
-      return '#238551'; // Green
+      if (h < 6) return SLEEP_COLORS.poor;
+      if (h < 7.5) return SLEEP_COLORS.fair;
+      return SLEEP_COLORS.good;
     };
 
     const barColors = hours.map(h => getColor(h));
@@ -36,6 +45,13 @@ export function SleepChart({ data, loading }: SleepChartProps) {
     return {
       tooltip: {
         trigger: 'axis',
+        backgroundColor: colors.card,
+        borderColor: colors.border,
+        borderWidth: 1,
+        textStyle: {
+          color: colors.foreground,
+          fontSize: 12,
+        },
         formatter: (params: any) => {
           const point = Array.isArray(params) ? params[0] : params;
           const idx = point.dataIndex;
@@ -57,19 +73,23 @@ export function SleepChart({ data, loading }: SleepChartProps) {
       xAxis: {
         type: 'category',
         data: dates,
+        axisLine: { lineStyle: { color: colors.border } },
         axisLabel: {
           formatter: (value: string) => format(parseISO(value), 'M/d'),
           rotate: 45,
           fontSize: 10,
+          color: colors.foregroundMuted,
         },
       },
       yAxis: {
         type: 'value',
         min: 0,
         max: 12,
+        splitLine: { lineStyle: { color: colors.border } },
         axisLabel: {
           formatter: (value: number) => `${value}h`,
           fontSize: 10,
+          color: colors.foregroundMuted,
         },
       },
       series: [
@@ -87,7 +107,7 @@ export function SleepChart({ data, loading }: SleepChartProps) {
           data: movingAvg,
           smooth: true,
           lineStyle: {
-            color: '#0F6894',
+            color: SLEEP_COLORS.line,
             width: 2,
           },
           symbol: 'none',
@@ -120,7 +140,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   noDataText: {
-    color: '#666',
-    fontSize: 14,
+    color: colors.foregroundMuted,
+    fontSize: fontSizes.sm,
   },
 });

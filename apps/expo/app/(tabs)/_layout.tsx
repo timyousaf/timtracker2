@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
-import { Text } from 'react-native';
+import { Text, Platform } from 'react-native';
+import { colors, fontSizes, fonts, spacing } from '@/lib/theme';
 
 export default function TabsLayout() {
   const { isSignedIn } = useAuth();
@@ -13,14 +14,33 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#0066cc',
-        tabBarInactiveTintColor: '#666',
+        tabBarActiveTintColor: colors.foreground,
+        tabBarInactiveTintColor: colors.foregroundMuted,
+        tabBarStyle: {
+          backgroundColor: colors.background,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+          paddingTop: spacing[1],
+          height: Platform.OS === 'ios' ? 88 : 60,
+        },
+        tabBarLabelStyle: {
+          fontSize: fontSizes.xs,
+          fontFamily: fonts.regular,
+        },
         headerStyle: {
-          backgroundColor: '#fff',
+          backgroundColor: colors.background,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          shadowColor: 'transparent',
+          elevation: 0,
         },
         headerTitleStyle: {
-          fontWeight: '600',
+          fontFamily: fonts.regular,
+          fontSize: fontSizes.base,
+          color: colors.foreground,
+          letterSpacing: -0.3,
         },
+        headerShadowVisible: false,
       }}
     >
       <Tabs.Screen

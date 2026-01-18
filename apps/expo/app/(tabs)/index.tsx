@@ -17,6 +17,7 @@ import {
   DEFAULT_DATE_RANGE,
   formatDateRangeForApi,
 } from '@timtracker/ui/utils';
+import { colors, fontSizes, fonts, spacing, borderRadius, shadows } from '@/lib/theme';
 import type {
   HealthChartDataPoint,
   SleepDataPoint,
@@ -214,7 +215,7 @@ export default function HomeScreen() {
   if (loading && !weightData.length) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#0066cc" />
+        <ActivityIndicator size="large" color={colors.foregroundMuted} />
         <Text style={styles.loadingText}>Loading charts...</Text>
       </View>
     );
@@ -292,8 +293,6 @@ export default function HomeScreen() {
         }
       >
         {/* ===== SECTION 1: CORE METRICS ===== */}
-        <Text style={styles.sectionHeader}>Core Metrics</Text>
-        
         {/* 1. Sleep */}
         <SleepChart
           data={sleepData}
@@ -374,8 +373,6 @@ export default function HomeScreen() {
         />
 
         {/* ===== SECTION 2: HEALTH DETAILS ===== */}
-        <Text style={styles.sectionHeader}>Health Details</Text>
-
         {/* 9. Resting Heart Rate */}
         <HealthChart
           data={restingHRData}
@@ -446,108 +443,108 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   header: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    borderBottomColor: colors.border,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
   },
   pickerButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.borderInput,
   },
   pickerButtonText: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
+    fontSize: fontSizes.sm,
+    color: colors.foreground,
+    fontFamily: fonts.regular,
   },
   pickerChevron: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: fontSizes.xs,
+    color: colors.foregroundMuted,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    width: '80%',
-    maxWidth: 300,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    padding: spacing[5],
+    width: '85%',
+    maxWidth: 320,
+    ...shadows.md,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 16,
+    fontSize: fontSizes.lg,
+    fontFamily: fonts.regular,
+    marginBottom: spacing[4],
     textAlign: 'center',
-    color: '#222',
+    color: colors.foreground,
+    letterSpacing: -0.3,
   },
   modalOption: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginBottom: 4,
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[4],
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing[1],
   },
   modalOptionSelected: {
-    backgroundColor: '#0066cc',
+    backgroundColor: colors.primary,
   },
   modalOptionText: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: fontSizes.sm,
+    color: colors.foreground,
   },
   modalOptionTextSelected: {
-    color: '#fff',
-    fontWeight: '500',
+    color: colors.primaryForeground,
+    fontFamily: fonts.regular,
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: spacing[6],
+    backgroundColor: colors.backgroundMuted,
   },
   loadingText: {
-    marginTop: 12,
-    color: '#666',
+    marginTop: spacing[3],
+    color: colors.foregroundMuted,
+    fontSize: fontSizes.sm,
   },
   errorContainer: {
-    backgroundColor: '#fee',
+    backgroundColor: '#fef2f2',
     borderWidth: 1,
-    borderColor: '#fcc',
-    borderRadius: 8,
-    padding: 16,
+    borderColor: '#fecaca',
+    borderRadius: borderRadius.xl,
+    padding: spacing[4],
     maxWidth: 300,
   },
   errorTitle: {
-    fontWeight: 'bold',
-    color: '#c00',
-    marginBottom: 4,
+    fontFamily: fonts.regular,
+    color: colors.destructive,
+    marginBottom: spacing[1],
+    fontSize: fontSizes.sm,
   },
   errorText: {
-    color: '#c00',
+    color: colors.destructive,
+    fontSize: fontSizes.sm,
   },
   scrollContent: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  sectionHeader: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#222',
-    marginTop: 24,
-    marginBottom: 12,
-    fontFamily: 'Georgia',
+    padding: spacing[4],
+    paddingBottom: spacing[8],
   },
 });

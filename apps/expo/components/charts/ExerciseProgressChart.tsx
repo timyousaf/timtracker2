@@ -5,6 +5,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { EChart, echarts } from './EChart';
 import { ChartCard } from './ChartCard';
+import { colors, fontSizes } from '@/lib/theme';
 import type { ExerciseProgressDataPoint } from '@timtracker/ui/types';
 import { format, parseISO } from 'date-fns';
 
@@ -28,12 +29,19 @@ export function ExerciseProgressChart({
     }
 
     const dates = data.map(d => d.date);
-    const volume = data.map(d => useReps ? d.totalReps : d.totalVolume);
+    const volume = data.map(d => useReps ? d.reps : d.totalVolume);
     const maxWeight = data.map(d => d.maxWeight);
 
     return {
       tooltip: {
         trigger: 'axis',
+        backgroundColor: colors.card,
+        borderColor: colors.border,
+        borderWidth: 1,
+        textStyle: {
+          color: colors.foreground,
+          fontSize: 12,
+        },
         formatter: (params: any) => {
           const items = Array.isArray(params) ? params : [params];
           const idx = items[0].dataIndex;
@@ -67,22 +75,27 @@ export function ExerciseProgressChart({
       xAxis: {
         type: 'category',
         data: dates,
+        axisLine: { lineStyle: { color: colors.border } },
         axisLabel: {
           formatter: (value: string) => format(parseISO(value), 'M/d'),
           rotate: 45,
           fontSize: 10,
+          color: colors.foregroundMuted,
         },
       },
       yAxis: [
         {
           type: 'value',
           name: useReps ? 'Reps' : 'Volume',
-          axisLabel: { fontSize: 10 },
+          nameTextStyle: { color: colors.foregroundMuted },
+          splitLine: { lineStyle: { color: colors.border } },
+          axisLabel: { fontSize: 10, color: colors.foregroundMuted },
         },
         {
           type: 'value',
           name: 'Weight',
-          axisLabel: { fontSize: 10 },
+          nameTextStyle: { color: colors.foregroundMuted },
+          axisLabel: { fontSize: 10, color: colors.foregroundMuted },
           splitLine: { show: false },
         },
       ],
@@ -92,7 +105,7 @@ export function ExerciseProgressChart({
           type: 'bar',
           data: volume,
           itemStyle: {
-            color: '#8884d8',
+            color: '#8b5cf6', // violet-500
           },
         },
         {
@@ -101,7 +114,7 @@ export function ExerciseProgressChart({
           yAxisIndex: 1,
           data: maxWeight,
           itemStyle: {
-            color: '#AA4643',
+            color: '#ef4444', // red-500
           },
           symbolSize: 8,
         },
@@ -112,7 +125,7 @@ export function ExerciseProgressChart({
           data: maxWeight,
           smooth: true,
           lineStyle: {
-            color: '#AA4643',
+            color: '#ef4444', // red-500
             width: 1,
           },
           symbol: 'none',
@@ -145,7 +158,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   noDataText: {
-    color: '#666',
-    fontSize: 14,
+    color: colors.foregroundMuted,
+    fontSize: fontSizes.sm,
   },
 });

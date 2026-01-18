@@ -2,7 +2,14 @@ import { ClerkProvider, ClerkLoaded, useAuth } from '@clerk/clerk-expo';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import { Geist_400Regular } from '@expo-google-fonts/geist';
 import { tokenCache } from '@/lib/tokenCache';
+import { colors } from '@/lib/theme';
+
+// Keep splash screen visible while loading fonts
+SplashScreen.preventAutoHideAsync();
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -35,7 +42,7 @@ function AuthGuard() {
   if (!isLoaded) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#0066cc" />
+        <ActivityIndicator size="large" color={colors.foregroundMuted} />
       </View>
     );
   }
@@ -44,6 +51,25 @@ function AuthGuard() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    Geist_400Regular,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  // Don't render until fonts are loaded
+  if (!fontsLoaded && !fontError) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color={colors.foregroundMuted} />
+      </View>
+    );
+  }
+
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
       <ClerkLoaded>
@@ -58,5 +84,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.background,
   },
 });

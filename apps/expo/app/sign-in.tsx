@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
+import { colors, fontSizes, fonts, spacing, borderRadius, shadows } from '@/lib/theme';
 
 // Required for OAuth to work
 WebBrowser.maybeCompleteAuthSession();
@@ -62,7 +63,7 @@ export default function SignInScreen() {
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color="#333" />
+            <ActivityIndicator color={colors.foreground} />
           ) : (
             <Text style={styles.googleButtonText}>Sign in with Google</Text>
           )}
@@ -75,56 +76,55 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
-    padding: 24,
+    padding: spacing[6],
     justifyContent: 'center',
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: fontSizes['3xl'],
+    fontFamily: fonts.regular,
+    color: colors.foreground,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: spacing[2],
+    letterSpacing: -1,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: fontSizes.base,
+    color: colors.foregroundMuted,
     textAlign: 'center',
-    marginBottom: 48,
+    marginBottom: spacing[12],
   },
   errorContainer: {
-    backgroundColor: '#fee',
+    backgroundColor: '#fef2f2',
     borderWidth: 1,
-    borderColor: '#fcc',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 24,
+    borderColor: '#fecaca',
+    borderRadius: borderRadius.lg,
+    padding: spacing[3],
+    marginBottom: spacing[6],
   },
   errorText: {
-    color: '#c00',
+    color: colors.destructive,
     textAlign: 'center',
+    fontSize: fontSizes.sm,
   },
   googleButton: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 16,
+    borderColor: colors.borderInput,
+    borderRadius: borderRadius.lg,
+    padding: spacing[4],
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    ...shadows.sm,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   googleButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
+    fontSize: fontSizes.base,
+    fontFamily: fonts.regular,
+    color: colors.foreground,
   },
 });

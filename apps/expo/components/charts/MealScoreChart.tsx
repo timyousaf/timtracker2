@@ -5,6 +5,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { EChart, echarts } from './EChart';
 import { ChartCard } from './ChartCard';
+import { colors, fontSizes } from '@/lib/theme';
 import type { DailyMealScoreDataPoint } from '@timtracker/ui/types';
 import { format, parseISO } from 'date-fns';
 
@@ -26,6 +27,13 @@ export function MealScoreChart({ data, loading }: MealScoreChartProps) {
     return {
       tooltip: {
         trigger: 'axis',
+        backgroundColor: colors.card,
+        borderColor: colors.border,
+        borderWidth: 1,
+        textStyle: {
+          color: colors.foreground,
+          fontSize: 12,
+        },
         formatter: (params: any) => {
           const point = Array.isArray(params) ? params[0] : params;
           const idx = point.dataIndex;
@@ -62,17 +70,23 @@ export function MealScoreChart({ data, loading }: MealScoreChartProps) {
       xAxis: {
         type: 'category',
         data: dates,
+        axisLine: { lineStyle: { color: colors.border } },
         axisLabel: {
           formatter: (value: string) => format(parseISO(value), 'M/d'),
           rotate: 45,
           fontSize: 10,
+          color: colors.foregroundMuted,
         },
       },
       yAxis: {
         type: 'value',
         min: 0,
         max: 10,
-        axisLabel: { fontSize: 10 },
+        splitLine: { lineStyle: { color: colors.border } },
+        axisLabel: { 
+          fontSize: 10,
+          color: colors.foregroundMuted,
+        },
       },
       series: [
         {
@@ -80,7 +94,7 @@ export function MealScoreChart({ data, loading }: MealScoreChartProps) {
           type: 'scatter',
           data: scores,
           itemStyle: {
-            color: '#2196F3',
+            color: '#3b82f6', // blue-500
           },
           symbolSize: 8,
         },
@@ -90,7 +104,7 @@ export function MealScoreChart({ data, loading }: MealScoreChartProps) {
           data: movingAvg,
           smooth: true,
           lineStyle: {
-            color: '#4CAF50',
+            color: '#22c55e', // green-500
             width: 2,
           },
           symbol: 'none',
@@ -123,7 +137,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   noDataText: {
-    color: '#666',
-    fontSize: 14,
+    color: colors.foregroundMuted,
+    fontSize: fontSizes.sm,
   },
 });
