@@ -108,8 +108,6 @@ export async function GET(request: NextRequest) {
         [startDateStr, endDateStr]
       );
 
-      console.log(`[calendar-heatmap] mindful query: ${startDateStr} to ${endDateStr}, found ${result.rows.length} rows`);
-      
       // Sum values by date
       for (const row of result.rows) {
         const existing = valueMap.get(row.date) || 0;

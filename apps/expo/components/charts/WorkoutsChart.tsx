@@ -103,8 +103,8 @@ export function WorkoutsChart({ data, loading }: WorkoutsChartProps) {
         },
       },
       grid: {
-        left: 50,
-        right: 50,
+        left: 40,
+        right: 40,
         top: 20,
         bottom: 60,
       },

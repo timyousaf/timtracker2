@@ -34,9 +34,6 @@ export function HealthChart({
       return {};
     }
 
-    // Debug: log data received
-    console.log(`[HealthChart ${title}] Data points: ${data.length}`, data.slice(0, 3));
-
     const dates = data.map(d => d.date);
     const values = data.map(d => d.value);
     const movingAvg = data.map(d => d.movingAvg);
@@ -73,8 +70,8 @@ export function HealthChart({
         },
       },
       grid: {
-        left: 50,
-        right: 20,
+        left: 40,
+        right: 10,
         top: 20,
         bottom: 40,
       },

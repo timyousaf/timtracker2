@@ -31,11 +31,13 @@ export function ChartCard({ title, loading, children }: ChartCardProps) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.card,
-    borderRadius: borderRadius.xl,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    padding: spacing[4],
+    paddingVertical: spacing[3],
+    paddingHorizontal: 0, // No horizontal padding - charts go edge to edge
     marginBottom: spacing[3],
+    overflow: 'hidden', // Clip chart to card bounds
     ...shadows.sm,
   },
   title: {

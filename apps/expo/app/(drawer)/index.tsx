@@ -127,7 +127,6 @@ export default function HomeScreen() {
         fetchMetrics(tokenGetter, { type: 'Waist Circumference (in)', ...dateRange }).catch(() => ({ data: [] })),
         fetchMetrics(tokenGetter, { type: 'Weight/Body Mass (lb)', ...dateRange }).catch(() => ({ data: [] })),
       ]).then(([sleep, mindful, exercise, strength, meal, waist, weight]) => {
-        console.log('[index] Initial mindful calendar response:', mindful?.points?.length, 'points, with data:', mindful?.points?.filter((p: any) => p.value !== null && p.value !== 0).length);
         setSleepData(sleep.data);
         setMindfulHeatmap(mindful);
         setExerciseHeatmap(exercise);
@@ -144,7 +143,6 @@ export default function HomeScreen() {
         fetchMetrics(tokenGetter, { type: 'Heart Rate Variability (ms)', ...dateRange }).catch(() => ({ data: [] })),
         fetchMetrics(tokenGetter, { type: 'Mindful Minutes (min)', ...dateRange }).catch(() => ({ data: [] })),
       ]).then(([restingHR, hrv, mindful]) => {
-        console.log('[index] Mindful metrics API response:', mindful.data?.length, 'points', mindful.data?.slice(0, 3));
         setRestingHRData(restingHR.data);
         setHrvData(hrv.data);
         setMindfulData(mindful.data);
@@ -184,10 +182,8 @@ export default function HomeScreen() {
   useEffect(() => {
     if (!initialLoadComplete) return;
     fetchCalendarHeatmap(getToken, { type: 'mindful', offset: mindfulOffset })
-      .then(data => {
-        console.log('[index] Mindful calendar API response:', data);
-        setMindfulHeatmap(data);
-      }).catch(console.error);
+      .then(setMindfulHeatmap)
+      .catch(console.error);
   }, [mindfulOffset]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -562,7 +558,8 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
   },
   scrollContent: {
-    padding: spacing[4],
+    paddingHorizontal: spacing[2], // Minimal horizontal padding (8px)
+    paddingTop: spacing[3],
     paddingBottom: spacing[8],
   },
 });

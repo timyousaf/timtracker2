@@ -57,7 +57,6 @@ export function CalendarHeatmap({
 
     // Debug: log data points with non-null values
     const nonNullPoints = data.points.filter(p => p.value !== null && p.value !== 0);
-    console.log(`[CalendarHeatmap ${title}] Points with data:`, nonNullPoints.length, nonNullPoints.slice(0, 5));
 
     // Transform data for ECharts calendar
     // For score-based coloring, we include the score as a third element
@@ -145,10 +144,10 @@ export function CalendarHeatmap({
       calendar: {
         orient: 'vertical',
         top: 50,
-        left: 40,
-        right: 40,
+        left: 20,
+        right: 20,
         bottom: 20,
-        cellSize: [42, 42],
+        cellSize: [46, 46], // Larger cells to use more horizontal space
         range: [startDate, endDate],
         itemStyle: {
           borderWidth: 1,

@@ -52,8 +52,8 @@ export function StrengthChart({ data, loading }: StrengthChartProps) {
         },
       },
       grid: {
-        left: 60,
-        right: 20,
+        left: 50,
+        right: 10,
         top: 20,
         bottom: 50,
       },

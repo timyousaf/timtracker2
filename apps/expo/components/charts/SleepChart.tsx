@@ -65,8 +65,8 @@ export function SleepChart({ data, loading }: SleepChartProps) {
         },
       },
       grid: {
-        left: 50,
-        right: 20,
+        left: 40,
+        right: 10,
         top: 30,
         bottom: 40,
       },
