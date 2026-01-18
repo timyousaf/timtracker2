@@ -370,7 +370,7 @@ export default function HomeScreen() {
         <HealthChart
           data={waistData}
           title="Waist Circumference"
-          color={colors.chart.rose400}
+          color={colors.chart.slate500}
           unit="in"
           chartType="scatter"
           loading={loadingCore}
@@ -381,7 +381,7 @@ export default function HomeScreen() {
         <HealthChart
           data={weightData}
           title="Body Weight"
-          color={colors.chart.rose400}
+          color={colors.chart.slate500}
           unit="lbs"
           chartType="scatter"
           loading={loadingCore}
@@ -403,7 +403,7 @@ export default function HomeScreen() {
         <HealthChart
           data={hrvData}
           title="Heart Rate Variability"
-          color={colors.chart.purple500}
+          color={colors.chart.indigo500}
           unit="ms"
           chartType="scatter"
           loading={loadingHealth}
@@ -429,7 +429,7 @@ export default function HomeScreen() {
         <HealthChart
           data={distanceData}
           title="Walking + Running Distance"
-          color={colors.chart.orange400}
+          color={colors.chart.sky500}
           unit="mi"
           chartType="bar"
           loading={loadingExercise}

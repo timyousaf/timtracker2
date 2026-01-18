@@ -31,6 +31,7 @@ timtracker2/
 │       └── lib/          # API client, utilities
 ├── packages/
 │   └── shared/           # Shared TypeScript types
+├── scripts/              # Migration & utility scripts (Python)
 └── docs/                 # Documentation
 ```
 
@@ -67,6 +68,18 @@ cd apps/expo
 eas build --profile production --platform ios
 eas submit --platform ios
 ```
+
+## Data Migration
+
+To migrate data from the old timtracker (GCP Cloud SQL) to this project (Neon):
+
+```bash
+cd scripts
+poetry install
+poetry run python migrate_from_gcp.py
+```
+
+See [scripts/README.md](./scripts/README.md) for full details and required environment variables.
 
 ## Documentation
 

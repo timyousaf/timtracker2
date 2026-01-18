@@ -39,23 +39,30 @@ export const colors = {
   // Chart color palette (Tailwind colors from shadcn)
   // Primary chart colors
   chart: {
+    // Neutrals
+    slate500: '#64748b',    // slate-500 - neutral for body measurements
+    slate600: '#475569',    // slate-600 - softer dark for trend lines
     zinc900: '#18181b',     // zinc-900 - primary dark
+    // Warm colors
     red500: '#ef4444',      // red-500
     orange400: '#fb923c',   // orange-400
     amber500: '#f59e0b',    // amber-500
     yellow500: '#eab308',   // yellow-500
+    // Greens
     lime500: '#84cc16',     // lime-500
     green500: '#22c55e',    // green-500
     emerald500: '#10b981',  // emerald-500
     teal500: '#14b8a6',     // teal-500
+    // Blues
     cyan500: '#06b6d4',     // cyan-500
-    sky500: '#0ea5e9',      // sky-500
+    sky500: '#0ea5e9',      // sky-500 - outdoor/distance
     blue500: '#3b82f6',     // blue-500
-    indigo500: '#6366f1',   // indigo-500
-    violet500: '#8b5cf6',   // violet-500
-    purple500: '#a855f7',   // purple-500
+    indigo500: '#6366f1',   // indigo-500 - HRV
+    // Purples/Pinks
+    violet500: '#8b5cf6',   // violet-500 - strength training
+    purple500: '#a855f7',   // purple-500 - mindfulness
     fuchsia500: '#d946ef',  // fuchsia-500
-    pink500: '#ec4899',     // pink-500
+    pink500: '#ec4899',     // pink-500 - heart rate
     rose500: '#f43f5e',     // rose-500
     rose400: '#fb7185',     // rose-400 (lighter)
   },

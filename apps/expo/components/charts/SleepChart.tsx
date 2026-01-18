@@ -20,7 +20,7 @@ const SLEEP_COLORS = {
   poor: colors.chart.red500,
   fair: colors.chart.yellow500,
   good: colors.chart.green500,
-  line: colors.chart.zinc900,
+  line: colors.chart.slate600, // Softer trend line
 };
 
 export function SleepChart({ data, loading }: SleepChartProps) {

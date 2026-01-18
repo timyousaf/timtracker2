@@ -25,6 +25,7 @@ Required environment variables:
         NEON_DATABASE_URL - postgres connection string
 """
 
+import argparse
 import os
 import sys
 import logging
@@ -242,6 +243,16 @@ def migrate_table(source_engine, dest_engine, table: str, batch_size: int = 1000
 
 def main():
     """Main migration function."""
+    parser = argparse.ArgumentParser(
+        description="Migrate tables from GCP Cloud SQL to Neon"
+    )
+    parser.add_argument(
+        "-y", "--yes",
+        action="store_true",
+        help="Skip confirmation prompt"
+    )
+    args = parser.parse_args()
+
     logger.info("=" * 60)
     logger.info("Starting migration from GCP Cloud SQL to Neon")
     logger.info("=" * 60)
@@ -305,10 +316,11 @@ def main():
         print("\nThis will TRUNCATE the destination tables before copying.")
         print("=" * 60)
 
-        response = input("\nProceed with migration? [y/N]: ").strip().lower()
-        if response != "y":
-            logger.info("Migration cancelled")
-            sys.exit(0)
+        if not args.yes:
+            response = input("\nProceed with migration? [y/N]: ").strip().lower()
+            if response != "y":
+                logger.info("Migration cancelled")
+                sys.exit(0)
 
         # Migrate each table
         logger.info("\nStarting table migration...")
