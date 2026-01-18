@@ -1,12 +1,8 @@
-openapi: 3.1.0
+openapi: 3.0.0
 info:
   title: TimTracker Query API
-  description: |
-    API for querying TimTracker tables and summarizing health data. 
-    Exposes both raw table access and analytic endpoints. 
-    Use /api/schema to discover tables, columns, and endpoints. 
-    For most use cases, prefer analytic endpoints (e.g., /api/sleep) over raw tables.
-  version: '2.0'
+  description: API for querying TimTracker tables and summarizing health data. Exposes both raw table access and analytic endpoints. Use /api/schema to discover tables, columns, and endpoints.
+  version: "2.0"
 servers:
   - url: https://timtracker-api.vercel.app
 paths:
@@ -14,23 +10,16 @@ paths:
     get:
       operationId: getSchema
       summary: Discover all tables, columns, and analytic endpoints
-      description: |
-        Returns a list of all tables (with columns, types, and enum values), and all analytic endpoints. 
-        Indicates which tables are raw and which endpoints provide aggregation/analytics.
+      description: Returns a list of all tables with columns, types, and enum values, plus all analytic endpoints.
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Schema and endpoint metadata
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  tables:
-                    type: object
-                  analyticEndpoints:
-                    type: array
 
   /api/schema/{table}/{column}/values:
     get:
@@ -50,7 +39,7 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Unique values for the column
           content:
             application/json:
@@ -66,9 +55,7 @@ paths:
     post:
       operationId: postFlexibleQuery
       summary: Flexible query for any table
-      description: |
-        Query any table with custom columns, filters, order, and limit. 
-        For raw tables, see /api/schema for recommended analytic endpoints.
+      description: Query any table with custom columns, filters, order, and limit.
       requestBody:
         required: true
         content:
@@ -91,7 +78,7 @@ paths:
                         type: string
                       op:
                         type: string
-                        enum: ['=', '>', '<', '>=', '<=', '!=', 'LIKE']
+                        description: "Operator: =, >, <, >=, <=, !=, LIKE"
                       value:
                         type: string
                 order_by:
@@ -101,7 +88,7 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: List of rows matching the query
           content:
             application/json:
@@ -114,38 +101,22 @@ paths:
     get:
       operationId: getSleepAnalytics
       summary: Aggregated daily sleep totals
-      description: Returns daily sleep totals (not raw intervals). Prefer this endpoint for sleep analytics.
+      description: Returns daily sleep totals. Prefer this endpoint for sleep analytics.
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Daily sleep totals
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        date:
-                          type: string
-                        hours:
-                          type: number
-                        readable:
-                          type: string
-                        movingAvg:
-                          type: number
 
   /api/metrics:
     get:
       operationId: getMetricsAnalytics
       summary: Aggregated health metrics
-      description: |
-        Returns daily averages for a given health metric type. 
-        Use the 'type' parameter to specify the metric (e.g., "Resting Heart Rate (bpm)").
+      description: Returns daily averages for a given health metric type.
       parameters:
         - name: type
           in: query
@@ -158,29 +129,16 @@ paths:
           required: false
           schema:
             type: string
-            enum: [day, week]
           description: Aggregate by day (default) or by week
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Daily/weekly averages for a metric
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        date:
-                          type: string
-                        value:
-                          type: number
-                        movingAvg:
-                          type: number
 
   /api/weekly-workouts:
     get:
@@ -190,25 +148,12 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Weekly workout summary
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  categories:
-                    type: array
-                    items:
-                      type: string
-                  series:
-                    type: array
-                    items:
-                      type: object
-                  maxHeartRate:
-                    type: array
-                    items:
-                      type: integer
 
   /api/calendar-heatmap:
     get:
@@ -220,31 +165,21 @@ paths:
           required: true
           schema:
             type: string
-            enum: [exercise, mindful, interaction, meal]
+          description: One of exercise, mindful, interaction, meal
         - name: offset
           in: query
           required: false
           schema:
             type: integer
-            default: 0
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Calendar heatmap data for a five week range
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  startDateStr:
-                    type: string
-                  endDateStr:
-                    type: string
-                  points:
-                    type: array
-                    items:
-                      type: object
 
   /api/meal-scores:
     get:
@@ -253,28 +188,12 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Meal logs with health scores and 7-day moving average
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        date:
-                          type: string
-                        score:
-                          type: number
-                        movingAvg:
-                          type: number
-                        meals:
-                          type: array
-                          items:
-                            type: object
 
   /api/log/meal:
     post:
@@ -302,7 +221,7 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Meal logged
           content:
             application/json:
@@ -341,9 +260,8 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Meal updated
-
     delete:
       summary: Delete a previously logged meal
       operationId: deleteMeal
@@ -356,7 +274,7 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Meal deleted
 
   /api/people:
@@ -372,7 +290,7 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: List of people
           content:
             application/json:
@@ -380,7 +298,6 @@ paths:
                 type: array
                 items:
                   type: object
-
     post:
       summary: Create or update a person
       operationId: createPerson
@@ -397,7 +314,6 @@ paths:
                   type: string
                 gender:
                   type: string
-                  enum: [male, female, other]
                 importance:
                   type: integer
                 alive:
@@ -415,7 +331,7 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Person ID
           content:
             application/json:
@@ -448,7 +364,6 @@ paths:
                   type: string
                 gender:
                   type: string
-                  enum: [male, female, other]
                 importance:
                   type: integer
                 alive:
@@ -464,7 +379,7 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Person updated
 
   /api/interactions:
@@ -477,9 +392,6 @@ paths:
           required: false
           schema:
             type: integer
-            default: 100
-            minimum: 1
-            maximum: 1000
         - in: query
           name: start
           required: false
@@ -495,7 +407,7 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: List of interactions
           content:
             application/json:
@@ -503,19 +415,6 @@ paths:
                 type: array
                 items:
                   type: object
-                  properties:
-                    id:
-                      type: integer
-                    date:
-                      type: string
-                      format: date
-                    person_name:
-                      type: string
-                    interaction_type:
-                      type: string
-                      enum: [IRL, Call, Text]
-                    note:
-                      type: string
 
   /api/log/interaction:
     post:
@@ -539,14 +438,12 @@ paths:
                           type: integer
                       people_notes:
                         type: object
-                        additionalProperties:
-                          type: string
                       date:
                         type: string
                         format: date
                       type:
                         type: string
-                        enum: [IRL, Call, Text]
+                        description: One of IRL, Call, Text
                       note:
                         type: string
                     required:
@@ -558,7 +455,7 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Interactions logged
           content:
             application/json:
@@ -593,22 +490,19 @@ paths:
                     type: integer
                 people_notes:
                   type: object
-                  additionalProperties:
-                    type: string
                 date:
                   type: string
                   format: date
                 type:
                   type: string
-                  enum: [IRL, Call, Text]
+                  description: One of IRL, Call, Text
                 note:
                   type: string
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Interaction updated
-
     delete:
       summary: Delete a social interaction
       operationId: deleteInteraction
@@ -621,7 +515,7 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Interaction deleted
 
   /api/daily-meal-scores:
@@ -644,7 +538,7 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: List of daily scores
           content:
             application/json:
@@ -652,14 +546,6 @@ paths:
                 type: array
                 items:
                   type: object
-                  properties:
-                    date:
-                      type: string
-                    health_score:
-                      type: integer
-                    health_comment:
-                      type: string
-
     post:
       summary: Upsert a daily meal score
       operationId: upsertDailyMealScore
@@ -682,7 +568,7 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: Score saved
 
 components:
@@ -690,7 +576,4 @@ components:
     bearerAuth:
       type: http
       scheme: bearer
-      description: |
-        Bearer token required to authenticate requests. 
-        Use the GPT API key configured in the ChatGPT connector settings.
-  schemas: {}
+      description: Bearer token for API authentication
