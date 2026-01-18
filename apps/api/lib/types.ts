@@ -89,6 +89,7 @@ export interface CalendarHeatmapPoint {
   y: number;
   value: number | null;
   date: string;
+  score?: number | null; // 0-10 diet score for meal type
   workouts?: WorkoutDetail[];
   interactions?: InteractionDetail[];
   meals?: MealDetail[];

@@ -15,6 +15,7 @@ interface CalendarHeatmapProps {
   unit: string;
   colorScale?: [string, string];
   uniformColor?: string;
+  useScoreColors?: boolean; // Use red/yellow/green based on point.score (0-10)
   data: CalendarHeatmapData | null;
   loading?: boolean;
   onNavigateBack?: () => void;
@@ -22,11 +23,27 @@ interface CalendarHeatmapProps {
   canNavigateForward?: boolean;
 }
 
+// Score-based colors for diet (0-10 scale)
+const SCORE_COLORS = {
+  poor: colors.chart.red500,    // 0-3
+  fair: colors.chart.yellow500, // 4-6
+  good: colors.chart.green500,  // 7-10
+  none: colors.background,      // no score
+};
+
+function getScoreColor(score: number | null | undefined): string {
+  if (score === null || score === undefined) return SCORE_COLORS.none;
+  if (score <= 3) return SCORE_COLORS.poor;
+  if (score <= 6) return SCORE_COLORS.fair;
+  return SCORE_COLORS.good;
+}
+
 export function CalendarHeatmap({
   title,
   unit,
   colorScale,
   uniformColor,
+  useScoreColors,
   data,
   loading,
   onNavigateBack,
@@ -39,7 +56,10 @@ export function CalendarHeatmap({
     }
 
     // Transform data for ECharts calendar
-    const heatmapData = data.points.map(p => [p.date, p.value ?? 0]);
+    // For score-based coloring, we include the score as a third element
+    const heatmapData = useScoreColors
+      ? data.points.map(p => [p.date, p.value ?? 0, p.score ?? null])
+      : data.points.map(p => [p.date, p.value ?? 0]);
     const maxValue = Math.max(...data.points.map(p => p.value ?? 0), 1);
     const mainColor = uniformColor || (colorScale ? colorScale[1] : colors.chart.green500);
 
@@ -47,6 +67,28 @@ export function CalendarHeatmap({
     const dates = data.points.map(p => p.date).sort();
     const startDate = dates[0];
     const endDate = dates[dates.length - 1];
+
+    // Build visualMap based on coloring mode
+    const visualMapConfig = useScoreColors
+      ? {
+          show: false,
+          type: 'piecewise',
+          dimension: 2, // Use the third element (score) for coloring
+          pieces: [
+            { value: null, color: colors.background },
+            { min: 0, max: 3, color: SCORE_COLORS.poor },
+            { min: 4, max: 6, color: SCORE_COLORS.fair },
+            { min: 7, max: 10, color: SCORE_COLORS.good },
+          ],
+        }
+      : {
+          show: false,
+          min: 0,
+          max: maxValue,
+          inRange: {
+            color: [colors.background, mainColor],
+          },
+        };
 
     return {
       tooltip: {
@@ -62,6 +104,11 @@ export function CalendarHeatmap({
           const point = data.points.find(p => p.date === date);
           
           let lines = [`<b>${date}</b>`, `${value} ${unit}`];
+          
+          // Add score info for diet calendar
+          if (useScoreColors && point?.score !== undefined && point?.score !== null) {
+            lines.push(`Score: ${point.score}/10`);
+          }
           
           if (point?.workouts?.length) {
             lines.push('<br/><b>Workouts:</b>');
@@ -90,14 +137,7 @@ export function CalendarHeatmap({
           return lines.join('<br/>');
         },
       },
-      visualMap: {
-        show: false,
-        min: 0,
-        max: maxValue,
-        inRange: {
-          color: [colors.background, mainColor],
-        },
-      },
+      visualMap: visualMapConfig,
       calendar: {
         orient: 'vertical',
         top: 50,
@@ -148,7 +188,7 @@ export function CalendarHeatmap({
         },
       ],
     };
-  }, [data, unit, colorScale, uniformColor]);
+  }, [data, unit, colorScale, uniformColor, useScoreColors]);
 
   if (!data || !data.points || data.points.length === 0) {
     return (

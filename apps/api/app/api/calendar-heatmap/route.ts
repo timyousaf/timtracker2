@@ -97,6 +97,7 @@ export async function GET(request: NextRequest) {
     const workoutsByDate = new Map<string, WorkoutDetail[]>();
     const interactionsByDate = new Map<string, InteractionDetail[]>();
     const mealsByDate = new Map<string, MealDetail[]>();
+    const scoresByDate = new Map<string, number>();
 
     if (chartType === 'mindful') {
       const result = await pool.query<{ date: string; value: number }>(
@@ -107,6 +108,8 @@ export async function GET(request: NextRequest) {
         [startDateStr, endDateStr]
       );
 
+      console.log(`[calendar-heatmap] mindful query: ${startDateStr} to ${endDateStr}, found ${result.rows.length} rows`);
+      
       // Sum values by date
       for (const row of result.rows) {
         const existing = valueMap.get(row.date) || 0;
@@ -195,7 +198,8 @@ export async function GET(request: NextRequest) {
         interactionsByDate.set(row.date, interactions);
       }
     } else if (chartType === 'meal') {
-      const result = await pool.query<{
+      // Fetch meal logs
+      const mealResult = await pool.query<{
         date: string;
         description: string;
       }>(
@@ -205,7 +209,7 @@ export async function GET(request: NextRequest) {
         [startDateStr, endDateStr]
       );
 
-      for (const row of result.rows) {
+      for (const row of mealResult.rows) {
         // Count meals
         const existing = valueMap.get(row.date) || 0;
         valueMap.set(row.date, existing + 1);
@@ -218,6 +222,21 @@ export async function GET(request: NextRequest) {
         const meals = mealsByDate.get(row.date) || [];
         meals.push(meal);
         mealsByDate.set(row.date, meals);
+      }
+
+      // Fetch daily meal scores for coloring
+      const scoreResult = await pool.query<{
+        date: string;
+        health_score: number;
+      }>(
+        `SELECT date::text, health_score
+         FROM daily_meal_scores
+         WHERE date >= $1 AND date <= $2 AND health_score IS NOT NULL`,
+        [startDateStr, endDateStr]
+      );
+
+      for (const row of scoreResult.rows) {
+        scoresByDate.set(row.date, row.health_score);
       }
     }
 
@@ -260,6 +279,11 @@ export async function GET(request: NextRequest) {
         const meals = mealsByDate.get(dateStr);
         if (meals && meals.length > 0) {
           point.meals = meals;
+        }
+        // Add diet score for coloring
+        const score = scoresByDate.get(dateStr);
+        if (score !== undefined) {
+          point.score = score;
         }
       }
 

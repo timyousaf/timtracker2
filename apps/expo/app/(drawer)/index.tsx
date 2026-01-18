@@ -25,7 +25,6 @@ import type {
   CalendarHeatmapData,
   WeeklyWorkoutsData,
   StrengthVolumeData,
-  DailyMealScoreDataPoint,
   ExerciseProgressDataPoint,
 } from '@timtracker/ui/types';
 import {
@@ -34,7 +33,6 @@ import {
   fetchCalendarHeatmap,
   fetchWeeklyWorkouts,
   fetchStrengthVolume,
-  fetchMealScores,
   fetchExerciseProgress,
 } from '@/lib/api';
 
@@ -44,7 +42,6 @@ import {
   SleepChart,
   WorkoutsChart,
   StrengthChart,
-  MealScoreChart,
   ExerciseProgressChart,
   CalendarHeatmap,
 } from '@/components/charts';
@@ -77,7 +74,6 @@ export default function HomeScreen() {
 
   // ===== CORE METRICS DATA =====
   const [sleepData, setSleepData] = useState<SleepDataPoint[]>([]);
-  const [mealScores, setMealScores] = useState<DailyMealScoreDataPoint[]>([]);
   const [mindfulHeatmap, setMindfulHeatmap] = useState<CalendarHeatmapData | null>(null);
   const [exerciseHeatmap, setExerciseHeatmap] = useState<CalendarHeatmapData | null>(null);
   const [strengthVolume, setStrengthVolume] = useState<StrengthVolumeData | null>(null);
@@ -124,16 +120,14 @@ export default function HomeScreen() {
       setLoadingCore(true);
       Promise.all([
         fetchSleep(tokenGetter, dateRange).catch(() => ({ data: [] })),
-        fetchMealScores(tokenGetter, dateRange).catch(() => ({ data: [] })),
         fetchCalendarHeatmap(tokenGetter, { type: 'mindful', offset: mindfulOffset }).catch(() => null),
         fetchCalendarHeatmap(tokenGetter, { type: 'exercise', offset: exerciseOffset }).catch(() => null),
         fetchStrengthVolume(tokenGetter, dateRange).catch(() => null),
         fetchCalendarHeatmap(tokenGetter, { type: 'meal', offset: mealOffset }).catch(() => null),
         fetchMetrics(tokenGetter, { type: 'Waist Circumference (in)', ...dateRange }).catch(() => ({ data: [] })),
         fetchMetrics(tokenGetter, { type: 'Weight/Body Mass (lb)', ...dateRange }).catch(() => ({ data: [] })),
-      ]).then(([sleep, meals, mindful, exercise, strength, meal, waist, weight]) => {
+      ]).then(([sleep, mindful, exercise, strength, meal, waist, weight]) => {
         setSleepData(sleep.data);
-        setMealScores(meals.data);
         setMindfulHeatmap(mindful);
         setExerciseHeatmap(exercise);
         setStrengthVolume(strength);
@@ -315,10 +309,17 @@ export default function HomeScreen() {
           loading={loadingCore}
         />
 
-        {/* 2. Diet (Meal Scores) */}
-        <MealScoreChart
-          data={mealScores}
+        {/* 2. Daily Diet Calendar */}
+        <CalendarHeatmap
+          title="Daily Diet"
+          chartType="meal"
+          unit="meals"
+          useScoreColors
+          data={mealHeatmap}
           loading={loadingCore}
+          onNavigateBack={() => setMealOffset(prev => prev + 1)}
+          onNavigateForward={() => setMealOffset(prev => Math.max(0, prev - 1))}
+          canNavigateForward={mealOffset > 0}
         />
 
         {/* 3. Mindful Minutes Calendar */}
@@ -351,19 +352,6 @@ export default function HomeScreen() {
         <StrengthChart
           data={strengthVolume}
           loading={loadingCore}
-        />
-
-        {/* 6. Meal Logging Calendar */}
-        <CalendarHeatmap
-          title="Meal Logging"
-          chartType="meal"
-          unit="meals"
-          uniformColor={colors.chart.amber500}
-          data={mealHeatmap}
-          loading={loadingCore}
-          onNavigateBack={() => setMealOffset(prev => prev + 1)}
-          onNavigateForward={() => setMealOffset(prev => Math.max(0, prev - 1))}
-          canNavigateForward={mealOffset > 0}
         />
 
         {/* 7. Waist Circumference */}
