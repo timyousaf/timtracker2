@@ -28,8 +28,8 @@ export interface HealthChartProps {
 
 export interface SleepDataPoint {
   date: string;
-  hours: number;
-  readable: string;
+  hours: number | null;
+  readable: string | null;
   movingAvg: number | null;
 }
 

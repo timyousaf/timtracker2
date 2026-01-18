@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { getPool } from '@/lib/db';
 import { getCached, setCached, createCacheKey } from '@/lib/cache';
-import { hoursToReadable } from '@/lib/aggregation';
+import { hoursToReadable, fillDateRange } from '@/lib/aggregation';
 import type { SleepApiResponse, SleepDataPoint } from '@/lib/types';
 
 // Force dynamic rendering for this route
@@ -148,7 +148,18 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    const response: SleepApiResponse = { data: result2 };
+    // Fill in missing dates with null values if date range is specified
+    let finalData: (SleepDataPoint | { date: string; hours: null; readable: null; movingAvg: null })[] = result2;
+    if (start && end) {
+      finalData = fillDateRange(result2, start, end).map(d => {
+        if ('hours' in d && d.hours !== null) {
+          return d as SleepDataPoint;
+        }
+        return { date: d.date, hours: null, readable: null, movingAvg: null };
+      });
+    }
+
+    const response: SleepApiResponse = { data: finalData as SleepDataPoint[] };
     setCached(cacheKey, response);
     
     return NextResponse.json(response);

@@ -114,12 +114,10 @@ export function HealthChart({
           type: 'line',
           data: movingAvg,
           smooth: true,
+          connectNulls: true,
           lineStyle: {
             color: colors.foreground,
             width: 2,
-          },
-          itemStyle: {
-            color: colors.foreground,
           },
           symbol: 'none',
         },

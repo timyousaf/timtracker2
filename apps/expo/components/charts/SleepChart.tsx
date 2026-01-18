@@ -33,8 +33,9 @@ export function SleepChart({ data, loading }: SleepChartProps) {
     const hours = data.map(d => d.hours);
     const movingAvg = data.map(d => d.movingAvg);
 
-    // Color based on hours
-    const getColor = (h: number) => {
+    // Color based on hours (handle null)
+    const getColor = (h: number | null) => {
+      if (h === null) return 'transparent';
       if (h < 6) return SLEEP_COLORS.poor;
       if (h < 7.5) return SLEEP_COLORS.fair;
       return SLEEP_COLORS.good;
@@ -58,6 +59,9 @@ export function SleepChart({ data, loading }: SleepChartProps) {
           const idx = point.dataIndex;
           const date = format(parseISO(dates[idx]), 'MMM d, yyyy');
           const h = hours[idx];
+          if (h === null) {
+            return `${date}\nNo sleep data`;
+          }
           const totalMinutes = Math.round(h * 60);
           const hrs = Math.floor(totalMinutes / 60);
           const mins = totalMinutes % 60;

@@ -84,7 +84,6 @@ export default function HomeScreen() {
   // ===== HEALTH DETAILS DATA =====
   const [restingHRData, setRestingHRData] = useState<HealthChartDataPoint[]>([]);
   const [hrvData, setHrvData] = useState<HealthChartDataPoint[]>([]);
-  const [mindfulData, setMindfulData] = useState<HealthChartDataPoint[]>([]);
   
   // ===== EXERCISE DETAILS DATA =====
   const [weeklyWorkouts, setWeeklyWorkouts] = useState<WeeklyWorkoutsData | null>(null);
@@ -141,11 +140,9 @@ export default function HomeScreen() {
       Promise.all([
         fetchMetrics(tokenGetter, { type: 'Resting Heart Rate (bpm)', ...dateRange }).catch(() => ({ data: [] })),
         fetchMetrics(tokenGetter, { type: 'Heart Rate Variability (ms)', ...dateRange }).catch(() => ({ data: [] })),
-        fetchMetrics(tokenGetter, { type: 'Mindful Minutes (min)', ...dateRange }).catch(() => ({ data: [] })),
-      ]).then(([restingHR, hrv, mindful]) => {
+      ]).then(([restingHR, hrv]) => {
         setRestingHRData(restingHR.data);
         setHrvData(hrv.data);
-        setMindfulData(mindful.data);
       }).finally(() => setLoadingHealth(false));
 
       // ===== SECTION 3: EXERCISE DETAILS =====
@@ -398,15 +395,6 @@ export default function HomeScreen() {
           loading={loadingHealth}
         />
 
-        {/* 11. Mindful Minutes (bar) */}
-        <HealthChart
-          data={mindfulData}
-          title="Mindful Minutes"
-          color={colors.chart.purple500}
-          unit="min"
-          chartType="bar"
-          loading={loadingHealth}
-        />
 
         {/* 12. Weekly Workouts */}
         <WorkoutsChart
