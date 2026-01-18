@@ -93,9 +93,24 @@ export function CalendarHeatmap({
           },
         };
 
-    // Helper to truncate text to a max length
-    const truncate = (text: string, maxLen: number) => 
-      text.length > maxLen ? text.substring(0, maxLen) + '...' : text;
+    // Helper to wrap text at word boundaries
+    const wrapText = (text: string, maxWidth: number): string[] => {
+      const words = text.split(' ');
+      const lines: string[] = [];
+      let currentLine = '';
+      
+      for (const word of words) {
+        if (currentLine.length + word.length + 1 <= maxWidth) {
+          currentLine += (currentLine ? ' ' : '') + word;
+        } else {
+          if (currentLine) lines.push(currentLine);
+          // If single word is too long, just use it as-is
+          currentLine = word;
+        }
+      }
+      if (currentLine) lines.push(currentLine);
+      return lines;
+    };
 
     return {
       tooltip: {
@@ -107,7 +122,7 @@ export function CalendarHeatmap({
           color: colors.foreground,
           fontSize: 12,
         },
-        extraCssText: 'max-width: 200px; white-space: pre-wrap; word-wrap: break-word;',
+        extraCssText: 'max-width: 220px; white-space: pre-wrap; word-wrap: break-word;',
         position: function (point: number[], params: any, dom: any, rect: any, size: any) {
           // Position tooltip to the left of the point if near right edge
           const tooltipWidth = size.contentSize[0];
@@ -134,21 +149,23 @@ export function CalendarHeatmap({
           if (point?.workouts?.length) {
             lines.push('', 'Workouts:');
             point.workouts.slice(0, 3).forEach(w => {
-              lines.push(truncate(`${w.type}: ${Math.round(w.durationMinutes)}m`, 25));
+              const text = `${w.type}: ${Math.round(w.durationMinutes)}m`;
+              lines.push(...wrapText(text, 28));
             });
           }
           
           if (point?.interactions?.length) {
             lines.push('', 'Interactions:');
             point.interactions.slice(0, 3).forEach(i => {
-              lines.push(truncate(`${i.personName} (${i.interactionType})`, 25));
+              const text = `${i.personName} (${i.interactionType})`;
+              lines.push(...wrapText(text, 28));
             });
           }
           
           if (point?.meals?.length) {
             lines.push('', 'Meals:');
             point.meals.slice(0, 3).forEach(m => {
-              lines.push(truncate(m.description, 25));
+              lines.push(...wrapText(m.description, 28));
             });
           }
           

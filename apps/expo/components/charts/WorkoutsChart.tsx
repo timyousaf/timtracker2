@@ -60,6 +60,23 @@ export function WorkoutsChart({ data, loading }: WorkoutsChartProps) {
       } as any);
     }
 
+    // Helper to wrap text at word boundaries
+    const wrapText = (text: string, maxWidth: number): string[] => {
+      const words = text.split(' ');
+      const lines: string[] = [];
+      let currentLine = '';
+      for (const word of words) {
+        if (currentLine.length + word.length + 1 <= maxWidth) {
+          currentLine += (currentLine ? ' ' : '') + word;
+        } else {
+          if (currentLine) lines.push(currentLine);
+          currentLine = word;
+        }
+      }
+      if (currentLine) lines.push(currentLine);
+      return lines;
+    };
+
     return {
       tooltip: {
         trigger: 'axis',
@@ -71,20 +88,22 @@ export function WorkoutsChart({ data, loading }: WorkoutsChartProps) {
           color: colors.foreground,
           fontSize: 12,
         },
+        extraCssText: 'max-width: 220px; white-space: pre-wrap;',
         formatter: (params: any) => {
           const items = Array.isArray(params) ? params : [params];
           const week = items[0]?.axisValue || '';
           let total = 0;
-          let lines = [`<b>${week}</b>`];
+          let lines = [week];
           
           items.forEach((item: any) => {
             if (item.seriesName === 'Max HR') {
               if (item.value != null) {
-                lines.push(`<span style="color:${item.color}">Max HR: ${item.value} bpm</span>`);
+                lines.push(`Max HR: ${item.value} bpm`);
               }
             } else if (item.value > 0) {
               total += item.value;
-              lines.push(`${item.seriesName}: ${item.value} min`);
+              // Wrap long workout names
+              wrapText(`${item.seriesName}: ${item.value} min`, 28).forEach(l => lines.push(l));
             }
           });
           

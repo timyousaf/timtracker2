@@ -35,7 +35,7 @@ export function ExerciseProgressChart({
     return {
       tooltip: {
         trigger: 'axis',
-        confine: true, // Keep tooltip within chart bounds
+        confine: true,
         backgroundColor: colors.card,
         borderColor: colors.border,
         borderWidth: 1,
@@ -43,6 +43,7 @@ export function ExerciseProgressChart({
           color: colors.foreground,
           fontSize: 12,
         },
+        extraCssText: 'max-width: 220px; white-space: pre-wrap;',
         formatter: (params: any) => {
           const items = Array.isArray(params) ? params : [params];
           const idx = items[0].dataIndex;
@@ -58,15 +59,18 @@ export function ExerciseProgressChart({
           
           let lines = [
             date,
-            `${useReps ? 'Total Reps' : 'Total Volume'}: ${vol.toLocaleString()}${useReps ? '' : ' lbs'}`,
+            `${useReps ? 'Total Reps' : 'Volume'}: ${vol.toLocaleString()}${useReps ? '' : ' lbs'}`,
             `Max Weight: ${max} lbs`,
           ];
           
           if (sets.length > 0) {
             lines.push('', 'Sets:');
-            sets.forEach((s, i) => {
-              lines.push(`Set ${i + 1}: ${s.reps} reps @ ${s.weight} lbs`);
+            sets.slice(0, 5).forEach((s, i) => {
+              lines.push(`${s.reps}x${s.weight} lbs`);
             });
+            if (sets.length > 5) {
+              lines.push(`+${sets.length - 5} more`);
+            }
           }
           
           return lines.join('\n');

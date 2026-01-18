@@ -301,10 +301,17 @@ export default function HomeScreen() {
         }
       >
         {/* ===== SECTION 1: CORE METRICS ===== */}
-        {/* 1. Sleep */}
-        <SleepChart
-          data={sleepData}
+        {/* 1. Exercise Calendar */}
+        <CalendarHeatmap
+          title="Exercise Calendar"
+          chartType="exercise"
+          unit="min"
+          colorScale={[colors.background, colors.chart.emerald500]}
+          data={exerciseHeatmap}
           loading={loadingCore}
+          onNavigateBack={() => setExerciseOffset(prev => prev + 1)}
+          onNavigateForward={() => setExerciseOffset(prev => Math.max(0, prev - 1))}
+          canNavigateForward={exerciseOffset > 0}
         />
 
         {/* 2. Daily Diet Calendar */}
@@ -320,7 +327,13 @@ export default function HomeScreen() {
           canNavigateForward={mealOffset > 0}
         />
 
-        {/* 3. Mindful Minutes Calendar */}
+        {/* 3. Sleep */}
+        <SleepChart
+          data={sleepData}
+          loading={loadingCore}
+        />
+
+        {/* 4. Mindful Minutes Calendar */}
         <CalendarHeatmap
           title="Mindful Minutes Calendar"
           chartType="mindful"
@@ -331,19 +344,6 @@ export default function HomeScreen() {
           onNavigateBack={() => setMindfulOffset(prev => prev + 1)}
           onNavigateForward={() => setMindfulOffset(prev => Math.max(0, prev - 1))}
           canNavigateForward={mindfulOffset > 0}
-        />
-
-        {/* 4. Exercise Calendar */}
-        <CalendarHeatmap
-          title="Exercise Calendar"
-          chartType="exercise"
-          unit="min"
-          colorScale={[colors.background, colors.chart.emerald500]}
-          data={exerciseHeatmap}
-          loading={loadingCore}
-          onNavigateBack={() => setExerciseOffset(prev => prev + 1)}
-          onNavigateForward={() => setExerciseOffset(prev => Math.max(0, prev - 1))}
-          canNavigateForward={exerciseOffset > 0}
         />
 
         {/* 5. Strength Training Volume */}

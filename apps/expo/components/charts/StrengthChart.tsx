@@ -19,6 +19,23 @@ export function StrengthChart({ data, loading }: StrengthChartProps) {
       return {};
     }
 
+    // Helper to wrap text at word boundaries
+    const wrapText = (text: string, maxWidth: number): string[] => {
+      const words = text.split(' ');
+      const lines: string[] = [];
+      let currentLine = '';
+      for (const word of words) {
+        if (currentLine.length + word.length + 1 <= maxWidth) {
+          currentLine += (currentLine ? ' ' : '') + word;
+        } else {
+          if (currentLine) lines.push(currentLine);
+          currentLine = word;
+        }
+      }
+      if (currentLine) lines.push(currentLine);
+      return lines;
+    };
+
     return {
       tooltip: {
         trigger: 'axis',
@@ -30,6 +47,7 @@ export function StrengthChart({ data, loading }: StrengthChartProps) {
           color: colors.foreground,
           fontSize: 12,
         },
+        extraCssText: 'max-width: 220px; white-space: pre-wrap;',
         formatter: (params: any) => {
           const point = Array.isArray(params) ? params[0] : params;
           const idx = point.dataIndex;
@@ -44,9 +62,12 @@ export function StrengthChart({ data, loading }: StrengthChartProps) {
           
           if (workouts.length > 0) {
             lines.push('', 'Workouts:');
-            workouts.forEach(w => {
-              lines.push(`${w.title}: ${w.volume.toLocaleString()} lbs`);
+            workouts.slice(0, 5).forEach(w => {
+              wrapText(`${w.title}: ${w.volume.toLocaleString()} lbs`, 28).forEach(l => lines.push(l));
             });
+            if (workouts.length > 5) {
+              lines.push(`+${workouts.length - 5} more`);
+            }
           }
           
           return lines.join('\n');
