@@ -13,16 +13,16 @@ interface WorkoutsChartProps {
   loading?: boolean;
 }
 
-// Shadcn-inspired chart color palette
+// Shadcn/Tailwind chart color palette from theme
 const CHART_COLORS = [
-  '#18181b', // zinc-900
-  '#3b82f6', // blue-500
-  '#22c55e', // green-500
-  '#f59e0b', // amber-500
-  '#8b5cf6', // violet-500
-  '#ec4899', // pink-500
-  '#06b6d4', // cyan-500
-  '#84cc16', // lime-500
+  colors.chart.zinc900,
+  colors.chart.blue500,
+  colors.chart.green500,
+  colors.chart.amber500,
+  colors.chart.violet500,
+  colors.chart.pink500,
+  colors.chart.cyan500,
+  colors.chart.lime500,
 ];
 
 export function WorkoutsChart({ data, loading }: WorkoutsChartProps) {
@@ -49,13 +49,13 @@ export function WorkoutsChart({ data, loading }: WorkoutsChartProps) {
         yAxisIndex: 1 as any,
         data: data.maxHeartRate as any,
         lineStyle: {
-          color: '#ef4444',
+          color: colors.chart.red500,
           type: 'dashed' as any,
         } as any,
         symbol: 'circle',
         symbolSize: 6,
         itemStyle: {
-          color: '#ef4444',
+          color: colors.chart.red500,
         },
       } as any);
     }

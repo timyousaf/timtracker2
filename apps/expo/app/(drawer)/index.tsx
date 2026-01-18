@@ -326,7 +326,7 @@ export default function HomeScreen() {
           title="Mindful Minutes Calendar"
           chartType="mindful"
           unit="min"
-          colorScale={['#FFFFFF', '#9C27B0']}
+          colorScale={[colors.background, colors.chart.purple500]}
           data={mindfulHeatmap}
           loading={loadingCore}
           onNavigateBack={() => setMindfulOffset(prev => prev + 1)}
@@ -339,7 +339,7 @@ export default function HomeScreen() {
           title="Exercise Calendar"
           chartType="exercise"
           unit="min"
-          colorScale={['#FFFFFF', '#4CAF50']}
+          colorScale={[colors.background, colors.chart.emerald500]}
           data={exerciseHeatmap}
           loading={loadingCore}
           onNavigateBack={() => setExerciseOffset(prev => prev + 1)}
@@ -358,7 +358,7 @@ export default function HomeScreen() {
           title="Meal Logging"
           chartType="meal"
           unit="meals"
-          uniformColor="#FF9800"
+          uniformColor={colors.chart.amber500}
           data={mealHeatmap}
           loading={loadingCore}
           onNavigateBack={() => setMealOffset(prev => prev + 1)}
@@ -370,7 +370,7 @@ export default function HomeScreen() {
         <HealthChart
           data={waistData}
           title="Waist Circumference"
-          color="#C77B7F"
+          color={colors.chart.rose400}
           unit="in"
           chartType="scatter"
           loading={loadingCore}
@@ -381,7 +381,7 @@ export default function HomeScreen() {
         <HealthChart
           data={weightData}
           title="Body Weight"
-          color="#C77B7F"
+          color={colors.chart.rose400}
           unit="lbs"
           chartType="scatter"
           loading={loadingCore}
@@ -393,7 +393,7 @@ export default function HomeScreen() {
         <HealthChart
           data={restingHRData}
           title="Resting Heart Rate"
-          color="#E91E63"
+          color={colors.chart.pink500}
           unit="bpm"
           chartType="scatter"
           loading={loadingHealth}
@@ -403,7 +403,7 @@ export default function HomeScreen() {
         <HealthChart
           data={hrvData}
           title="Heart Rate Variability"
-          color="#9C27B0"
+          color={colors.chart.purple500}
           unit="ms"
           chartType="scatter"
           loading={loadingHealth}
@@ -413,7 +413,7 @@ export default function HomeScreen() {
         <HealthChart
           data={mindfulData}
           title="Mindful Minutes"
-          color="#9C27B0"
+          color={colors.chart.purple500}
           unit="min"
           chartType="bar"
           loading={loadingHealth}
@@ -429,7 +429,7 @@ export default function HomeScreen() {
         <HealthChart
           data={distanceData}
           title="Walking + Running Distance"
-          color="#FF9F40"
+          color={colors.chart.orange400}
           unit="mi"
           chartType="bar"
           loading={loadingExercise}

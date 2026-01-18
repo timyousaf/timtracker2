@@ -105,7 +105,7 @@ export function ExerciseProgressChart({
           type: 'bar',
           data: volume,
           itemStyle: {
-            color: '#8b5cf6', // violet-500
+            color: colors.chart.violet500,
           },
         },
         {
@@ -114,7 +114,7 @@ export function ExerciseProgressChart({
           yAxisIndex: 1,
           data: maxWeight,
           itemStyle: {
-            color: '#ef4444', // red-500
+            color: colors.chart.red500,
           },
           symbolSize: 8,
         },
@@ -125,7 +125,7 @@ export function ExerciseProgressChart({
           data: maxWeight,
           smooth: true,
           lineStyle: {
-            color: '#ef4444', // red-500
+            color: colors.chart.red500,
             width: 1,
           },
           symbol: 'none',

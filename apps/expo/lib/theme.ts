@@ -30,21 +30,35 @@ export const colors = {
   border: '#e4e4e7', // zinc-200
   borderInput: '#d4d4d8', // zinc-300
   
-  // Semantic colors
+  // Semantic colors (Tailwind)
   destructive: '#ef4444', // red-500
   success: '#22c55e', // green-500
   warning: '#f59e0b', // amber-500
   info: '#3b82f6', // blue-500
   
-  // Chart-specific colors (keeping existing palette)
-  chartSleep: '#22c55e', // green
-  chartSleepGoal: '#ef4444', // red for goal line
-  chartMindful: '#a855f7', // purple
-  chartExercise: '#22c55e', // green
-  chartMeal: '#f97316', // orange
-  chartStrength: '#3b82f6', // blue
-  chartHeart: '#ec4899', // pink
-  chartWeight: '#b45a5d', // muted red/pink
+  // Chart color palette (Tailwind colors from shadcn)
+  // Primary chart colors
+  chart: {
+    zinc900: '#18181b',     // zinc-900 - primary dark
+    red500: '#ef4444',      // red-500
+    orange400: '#fb923c',   // orange-400
+    amber500: '#f59e0b',    // amber-500
+    yellow500: '#eab308',   // yellow-500
+    lime500: '#84cc16',     // lime-500
+    green500: '#22c55e',    // green-500
+    emerald500: '#10b981',  // emerald-500
+    teal500: '#14b8a6',     // teal-500
+    cyan500: '#06b6d4',     // cyan-500
+    sky500: '#0ea5e9',      // sky-500
+    blue500: '#3b82f6',     // blue-500
+    indigo500: '#6366f1',   // indigo-500
+    violet500: '#8b5cf6',   // violet-500
+    purple500: '#a855f7',   // purple-500
+    fuchsia500: '#d946ef',  // fuchsia-500
+    pink500: '#ec4899',     // pink-500
+    rose500: '#f43f5e',     // rose-500
+    rose400: '#fb7185',     // rose-400 (lighter)
+  },
 };
 
 export const fonts = {

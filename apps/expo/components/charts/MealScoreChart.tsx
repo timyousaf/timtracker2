@@ -94,7 +94,7 @@ export function MealScoreChart({ data, loading }: MealScoreChartProps) {
           type: 'scatter',
           data: scores,
           itemStyle: {
-            color: '#3b82f6', // blue-500
+            color: colors.chart.blue500,
           },
           symbolSize: 8,
         },
@@ -104,7 +104,7 @@ export function MealScoreChart({ data, loading }: MealScoreChartProps) {
           data: movingAvg,
           smooth: true,
           lineStyle: {
-            color: '#22c55e', // green-500
+            color: colors.chart.green500,
             width: 2,
           },
           symbol: 'none',

@@ -41,7 +41,7 @@ export function CalendarHeatmap({
     // Transform data for ECharts calendar
     const heatmapData = data.points.map(p => [p.date, p.value ?? 0]);
     const maxValue = Math.max(...data.points.map(p => p.value ?? 0), 1);
-    const mainColor = uniformColor || (colorScale ? colorScale[1] : '#22c55e'); // green-500
+    const mainColor = uniformColor || (colorScale ? colorScale[1] : colors.chart.green500);
 
     // Get actual ISO date range from points (sorted)
     const dates = data.points.map(p => p.date).sort();

@@ -15,12 +15,12 @@ interface SleepChartProps {
   loading?: boolean;
 }
 
-// Sleep quality colors (keeping semantic meaning)
+// Sleep quality colors using theme (Tailwind)
 const SLEEP_COLORS = {
-  poor: '#ef4444',    // red-500
-  fair: '#eab308',    // yellow-500
-  good: '#22c55e',    // green-500
-  line: '#18181b',    // zinc-900
+  poor: colors.chart.red500,
+  fair: colors.chart.yellow500,
+  good: colors.chart.green500,
+  line: colors.chart.zinc900,
 };
 
 export function SleepChart({ data, loading }: SleepChartProps) {

@@ -82,7 +82,7 @@ export function StrengthChart({ data, loading }: StrengthChartProps) {
           type: 'bar',
           data: data.series,
           itemStyle: {
-            color: '#8b5cf6', // violet-500
+            color: colors.chart.violet500,
           },
         },
       ],
