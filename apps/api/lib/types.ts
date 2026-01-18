@@ -36,7 +36,7 @@ export interface HealthMetricsResponse {
 
 export interface HealthChartDataPoint {
   date: string;
-  value: number;
+  value: number | null;
   movingAvg: number | null;
 }
 
@@ -147,10 +147,10 @@ export interface ExerciseSet {
 
 export interface ExerciseProgressDataPoint {
   date: string;
-  totalVolume: number;
-  totalReps?: number;
-  reps?: number;
-  maxWeight: number;
+  totalVolume: number | null;
+  totalReps?: number | null;
+  reps?: number | null;
+  maxWeight: number | null;
   sets: ExerciseSet[];
 }
 

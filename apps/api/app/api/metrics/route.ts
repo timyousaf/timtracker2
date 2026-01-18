@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { getPool } from '@/lib/db';
 import { getCached, setCached, createCacheKey } from '@/lib/cache';
-import { calculateMovingAverage, groupByDate, groupByWeek } from '@/lib/aggregation';
+import { calculateMovingAverage, groupByDate, groupByWeek, fillDateRange, fillWeekRange } from '@/lib/aggregation';
 import type { MetricsApiResponse } from '@/lib/types';
 
 // Force dynamic rendering for this route
@@ -102,7 +102,17 @@ export async function GET(request: NextRequest) {
     // Calculate moving average
     const withMovingAvg = calculateMovingAverage(aggregated);
 
-    const response: MetricsApiResponse = { data: withMovingAvg };
+    // Fill in gaps with null values if date range is specified
+    let finalData: typeof withMovingAvg | ReturnType<typeof fillDateRange> = withMovingAvg;
+    if (start && end) {
+      if (period === 'week') {
+        finalData = fillWeekRange(withMovingAvg, start, end);
+      } else {
+        finalData = fillDateRange(withMovingAvg, start, end);
+      }
+    }
+
+    const response: MetricsApiResponse = { data: finalData as typeof withMovingAvg };
     setCached(cacheKey, response);
     
     return NextResponse.json(response);

@@ -95,6 +95,7 @@ export function CalendarHeatmap({
 
     return {
       tooltip: {
+        confine: true,
         backgroundColor: colors.card,
         borderColor: colors.border,
         borderWidth: 1,

@@ -108,3 +108,78 @@ export function hoursToReadable(hours: number): string {
   if (m === 0) return `${h} hr`;
   return `${h} hr ${m} min`;
 }
+
+/**
+ * Fill in missing dates in a range with null values
+ * Ensures charts show gaps for days with no data
+ */
+export function fillDateRange<T extends { date: string }>(
+  data: T[],
+  startDate: string,
+  endDate: string
+): (T | { date: string; value: null; movingAvg: null })[] {
+  const dataMap = new Map<string, T>();
+  for (const point of data) {
+    dataMap.set(point.date, point);
+  }
+
+  const result: (T | { date: string; value: null; movingAvg: null })[] = [];
+  const current = new Date(startDate);
+  const end = new Date(endDate);
+
+  while (current <= end) {
+    const dateStr = current.toISOString().split('T')[0];
+    const existing = dataMap.get(dateStr);
+    if (existing) {
+      result.push(existing);
+    } else {
+      result.push({ date: dateStr, value: null, movingAvg: null });
+    }
+    current.setDate(current.getDate() + 1);
+  }
+
+  return result;
+}
+
+/**
+ * Generate all week start dates in a range
+ */
+export function getWeeksInRange(startDate: string, endDate: string): string[] {
+  const weeks: string[] = [];
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  
+  // Move to the first Sunday on or before start
+  const firstWeekStart = getWeekStart(start);
+  const current = new Date(firstWeekStart);
+
+  while (current <= end) {
+    weeks.push(current.toISOString().split('T')[0]);
+    current.setDate(current.getDate() + 7);
+  }
+
+  return weeks;
+}
+
+/**
+ * Fill in missing weeks in a range with null/zero values
+ */
+export function fillWeekRange<T extends { date: string }>(
+  data: T[],
+  startDate: string,
+  endDate: string
+): (T | { date: string; value: null })[] {
+  const dataMap = new Map<string, T>();
+  for (const point of data) {
+    dataMap.set(point.date, point);
+  }
+
+  const weeks = getWeeksInRange(startDate, endDate);
+  return weeks.map(weekDate => {
+    const existing = dataMap.get(weekDate);
+    if (existing) {
+      return existing;
+    }
+    return { date: weekDate, value: null };
+  });
+}

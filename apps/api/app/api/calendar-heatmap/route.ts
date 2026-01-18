@@ -122,7 +122,8 @@ export async function GET(request: NextRequest) {
       }>(
         `SELECT start_time, type, duration_seconds, metrics
          FROM apple_health_workouts
-         WHERE start_time >= $1 AND start_time < $2::date + interval '1 day'`,
+         WHERE start_time >= $1 AND start_time < $2::date + interval '1 day'
+           AND type NOT IN ('Walk', 'Outdoor Walk')`,
         [startDateStr, endDateStr]
       );
 

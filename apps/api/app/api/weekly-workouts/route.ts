@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { getPool } from '@/lib/db';
 import { getCached, setCached, createCacheKey } from '@/lib/cache';
-import { getWeekStart, getWeekLabel } from '@/lib/aggregation';
+import { getWeekStart, getWeekLabel, getWeeksInRange } from '@/lib/aggregation';
 import type { WeeklyWorkoutsApiResponse, WorkoutSeries } from '@/lib/types';
 
 // Force dynamic rendering for this route
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       SELECT type, start_time, duration_seconds, metrics
       FROM apple_health_workouts
       WHERE start_time IS NOT NULL
-        AND type != 'Outdoor Walk'
+        AND type NOT IN ('Walk', 'Outdoor Walk')
     `;
 
     if (start) {
@@ -128,15 +128,26 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Sort weeks and create categories
-    const sortedWeeks = Array.from(weekData.keys()).sort();
-    
-    // Ensure we include up to current week
-    const currentWeekStart = getWeekStart(new Date());
-    const currentWeekKey = currentWeekStart.toISOString().split('T')[0];
-    if (sortedWeeks.length > 0 && currentWeekKey > sortedWeeks[sortedWeeks.length - 1]) {
-      sortedWeeks.push(currentWeekKey);
-      weekData.set(currentWeekKey, { workoutMinutes: new Map(), maxHR: null });
+    // Generate all weeks in the date range (if range provided), otherwise use data weeks
+    let sortedWeeks: string[];
+    if (start && end) {
+      sortedWeeks = getWeeksInRange(start, end);
+      // Ensure all weeks have data entries (even if empty)
+      for (const weekKey of sortedWeeks) {
+        if (!weekData.has(weekKey)) {
+          weekData.set(weekKey, { workoutMinutes: new Map(), maxHR: null });
+        }
+      }
+    } else {
+      sortedWeeks = Array.from(weekData.keys()).sort();
+      
+      // Ensure we include up to current week
+      const currentWeekStart = getWeekStart(new Date());
+      const currentWeekKey = currentWeekStart.toISOString().split('T')[0];
+      if (sortedWeeks.length > 0 && currentWeekKey > sortedWeeks[sortedWeeks.length - 1]) {
+        sortedWeeks.push(currentWeekKey);
+        weekData.set(currentWeekKey, { workoutMinutes: new Map(), maxHR: null });
+      }
     }
 
     const categories = sortedWeeks.map(weekKey => {

@@ -35,6 +35,7 @@ export function ExerciseProgressChart({
     return {
       tooltip: {
         trigger: 'axis',
+        confine: true, // Keep tooltip within chart bounds
         backgroundColor: colors.card,
         borderColor: colors.border,
         borderWidth: 1,
@@ -49,6 +50,11 @@ export function ExerciseProgressChart({
           const vol = volume[idx];
           const max = maxWeight[idx];
           const sets = data[idx]?.sets || [];
+          
+          // Handle null values (no data for this date)
+          if (vol == null || max == null) {
+            return `${date}\nNo data`;
+          }
           
           let lines = [
             date,
@@ -67,9 +73,9 @@ export function ExerciseProgressChart({
         },
       },
       grid: {
-        left: 40,
-        right: 40,
-        top: 20,
+        left: 50,
+        right: 50,
+        top: 40, // More space for dots at top
         bottom: 40,
       },
       xAxis: {
@@ -110,25 +116,20 @@ export function ExerciseProgressChart({
         },
         {
           name: 'Max Weight',
-          type: 'scatter',
-          yAxisIndex: 1,
-          data: maxWeight,
-          itemStyle: {
-            color: colors.chart.red500,
-          },
-          symbolSize: 8,
-        },
-        {
-          name: 'Max Weight Trend',
           type: 'line',
           yAxisIndex: 1,
           data: maxWeight,
-          smooth: true,
+          connectNulls: true, // Connect dots across null gaps
           lineStyle: {
             color: colors.chart.red500,
-            width: 1,
+            width: 2,
           },
-          symbol: 'none',
+          itemStyle: {
+            color: colors.chart.red500,
+          },
+          symbol: 'circle',
+          symbolSize: 8,
+          showAllSymbol: true, // Always show symbols even when sparse
         },
       ],
     };

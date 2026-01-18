@@ -53,6 +53,7 @@ export function HealthChart({
     return {
       tooltip: {
         trigger: 'axis',
+        confine: true,
         backgroundColor: colors.card,
         borderColor: colors.border,
         borderWidth: 1,

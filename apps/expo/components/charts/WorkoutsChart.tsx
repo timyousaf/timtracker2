@@ -63,6 +63,7 @@ export function WorkoutsChart({ data, loading }: WorkoutsChartProps) {
     return {
       tooltip: {
         trigger: 'axis',
+        confine: true,
         backgroundColor: colors.card,
         borderColor: colors.border,
         borderWidth: 1,

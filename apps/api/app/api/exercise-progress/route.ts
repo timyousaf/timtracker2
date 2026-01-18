@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPool } from '@/lib/db';
 import { getCached, setCached, createCacheKey } from '@/lib/cache';
 import type { ExerciseProgressApiResponse, ExerciseProgressDataPoint, ExerciseSet } from '@/lib/types';
+import { fillDateRange } from '@/lib/aggregation';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
@@ -151,7 +152,20 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const response: ExerciseProgressApiResponse = { data: progressData };
+    // Fill in gaps with null values if date range is specified
+    let finalData: (ExerciseProgressDataPoint | { date: string; value: null; movingAvg: null })[] = progressData;
+    if (start && end) {
+      finalData = fillDateRange(progressData.map(d => ({ ...d, value: d.totalVolume })), start, end)
+        .map(d => {
+          if ('totalVolume' in d) {
+            return d as ExerciseProgressDataPoint;
+          }
+          // Return null placeholder for missing dates
+          return { date: d.date, totalVolume: null, reps: null, maxWeight: null, sets: [] } as any;
+        });
+    }
+
+    const response: ExerciseProgressApiResponse = { data: finalData as ExerciseProgressDataPoint[] };
     setCached(cacheKey, response);
     return NextResponse.json(response);
   } catch (error) {
