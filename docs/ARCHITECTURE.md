@@ -1,63 +1,104 @@
-# TimTracker2 Architecture
+# Architecture
 
 ## Overview
 
-Next.js 14 App Router application with Clerk authentication and Neon PostgreSQL. Server-side rendering by default, with API routes for backend logic.
+Monorepo with shared code between web and iOS. API-first design with all data fetched from Next.js API routes.
 
-## Key Design Decisions
-
-### Middleware-Based Route Protection
-- `middleware.ts` runs on every request
-- All routes protected unless explicitly marked public
-- Public routes: `/`, `/api/hello`, `/sign-in`, `/sign-up`
-- **Important**: Update middleware when adding new public routes
-
-### Clerk Authentication
-- Pre-built UI components (`<SignedIn>`, `<SignedOut>`, `<UserButton>`)
-- Server: `auth()` from `@clerk/nextjs/server`
-- Client: `useAuth()` hook from `@clerk/nextjs`
-
-### Database Access
-- `lib/db.ts` provides connection pool to Neon PostgreSQL
-- Uses `pg` with SSL and connection pooling for serverless
-- All queries server-side only
-
-## Request Flow
-
-```mermaid
-graph LR
-    A[Request] --> B[Middleware]
-    B -->|Authenticated| C[Page/API Route]
-    B -->|Unauthenticated| D[Redirect to Sign-in]
-    C --> E[Database Query]
-    E --> F[Response]
 ```
+┌─────────────────────────────────────────────────────┐
+│                    Expo App                          │
+│  ┌──────────────┐  ┌──────────────┐                 │
+│  │   Web Build  │  │  iOS Build   │                 │
+│  │   (Vercel)   │  │ (TestFlight) │                 │
+│  └──────┬───────┘  └──────┬───────┘                 │
+│         └────────┬────────┘                         │
+│                  ▼                                  │
+│         Shared Components                           │
+│         (ECharts, UI)                              │
+└─────────────────────┬───────────────────────────────┘
+                      │ fetch()
+                      ▼
+┌─────────────────────────────────────────────────────┐
+│              Next.js API (Vercel)                   │
+│  ┌─────────────────────────────────────────────┐   │
+│  │  /api/sleep, /api/metrics, /api/workouts    │   │
+│  │  /api/exercise-progress, /api/meal-scores   │   │
+│  └─────────────────────┬───────────────────────┘   │
+│                        │                            │
+│                        ▼                            │
+│              Clerk Auth + Neon PostgreSQL           │
+└─────────────────────────────────────────────────────┘
+```
+
+## Key Patterns
+
+### Cross-Platform Charts
+
+Platform-specific ECharts implementations:
+- `EChart.web.tsx` — CanvasRenderer for web
+- `EChart.native.tsx` — SVGRenderer via `@wuba/react-native-echarts`
+
+Shared chart components (SleepChart, HealthChart, etc.) use the unified `EChart` export.
+
+### API Design
+
+All endpoints:
+1. Verify Clerk auth via `auth()`
+2. Query Neon PostgreSQL
+3. Aggregate/transform data server-side
+4. Return JSON with moving averages pre-computed
+
+Date range filling: APIs fill gaps with `null` values so charts show proper x-axis scaling.
+
+### Authentication
+
+- **API**: Clerk middleware + `auth()` in route handlers
+- **Expo**: Clerk React Native SDK with `expo-secure-store` for token caching
+- All API calls include `Authorization: Bearer <token>` header
+
+### Navigation
+
+Drawer navigation with:
+- Hamburger menu → slide-out drawer
+- Home (charts dashboard) + Settings
+- Time range picker in header
+
+## Database Schema
+
+Key tables:
+- `apple_health_metrics` — Daily health values (weight, HRV, etc.)
+- `apple_health_sleep` — Sleep segments with start/end times
+- `apple_health_workouts` — Workout sessions from Apple Health
+- `hevy_workouts` — Strength training from Hevy app
+- `meal_logs` / `daily_meal_scores` — Diet tracking
 
 ## Deployment
 
-```mermaid
-graph LR
-    A[Git Push] --> B[Vercel Build]
-    B --> C[Edge Network]
-    C --> D[Clerk Auth]
-    C --> E[Neon DB]
+### Vercel (CI/CD)
+
+Both projects linked to same GitHub repo with different root directories:
+
+```
+Push to main
+    │
+    ├──► timtracker-api (apps/api)
+    │    └── npm run build:api
+    │
+    └──► timtracker2 (apps/expo)
+         └── npx expo export -p web
 ```
 
-- Vercel handles builds and edge deployment
-- Environment variables configured in Vercel dashboard
-- See README.md for required env vars
+### EAS Build (iOS)
 
-## Security Considerations
+```bash
+eas build --platform ios --profile production --auto-submit
+```
 
-1. **Route Protection**: Middleware verifies auth on all non-public routes
-2. **API Routes**: Always verify auth tokens, even behind middleware
-3. **Database**: All queries server-side, never exposed to client
-4. **Secrets**: Never commit; use Vercel env vars
-5. **Rate Limiting**: Consider adding for production API routes
+Credentials managed by EAS. Builds submitted directly to TestFlight.
 
-## Future Considerations
+## Security
 
-- State management (Zustand if needed)
-- Real-time features (WebSockets/SSE)
-- File storage (S3, Cloudinary)
-- Data visualization/charts
+- All routes protected by Clerk middleware
+- Database queries server-side only
+- Secrets in Vercel/EAS environment variables
+- In-memory caching (5min TTL) to reduce DB load
