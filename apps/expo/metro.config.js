@@ -18,4 +18,13 @@ config.resolver.nodeModulesPaths = [
 // Resolve packages from the monorepo
 config.resolver.disableHierarchicalLookup = true;
 
+// Handle Node.js polyfills for web builds
+// The 'buffer/' import (with trailing slash) is used by whatwg-url-without-unicode
+// and needs to be resolved to the buffer package
+config.resolver.extraNodeModules = {
+  ...config.resolver.extraNodeModules,
+  'buffer/': require.resolve('buffer/'),
+  'buffer': require.resolve('buffer/'),
+};
+
 module.exports = config;

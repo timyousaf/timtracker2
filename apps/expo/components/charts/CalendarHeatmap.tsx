@@ -41,6 +41,11 @@ export function CalendarHeatmap({
     const maxValue = Math.max(...data.points.map(p => p.value ?? 0), 1);
     const mainColor = uniformColor || (colorScale ? colorScale[1] : '#4CAF50');
 
+    // Get actual ISO date range from points (sorted)
+    const dates = data.points.map(p => p.date).sort();
+    const startDate = dates[0]; // ISO format like "2024-12-15"
+    const endDate = dates[dates.length - 1];
+
     return {
       tooltip: {
         formatter: (params: any) => {
@@ -89,7 +94,7 @@ export function CalendarHeatmap({
         left: 30,
         right: 30,
         cellSize: ['auto', 20],
-        range: [data.startDateStr, data.endDateStr],
+        range: [startDate, endDate], // Use ISO dates from points
         itemStyle: {
           borderWidth: 1,
           borderColor: '#fff',
