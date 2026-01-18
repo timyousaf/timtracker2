@@ -198,7 +198,9 @@ export function CalendarHeatmap({
             show: true,
             formatter: (params: any) => {
               const date = new Date(params.data[0]);
-              return date.getDate().toString();
+              // Use getUTCDate to avoid timezone offset issues
+              // ISO dates like '2026-01-18' are parsed as UTC midnight
+              return date.getUTCDate().toString();
             },
             fontSize: 12,
             color: colors.foreground,
