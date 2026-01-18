@@ -1,9 +1,9 @@
 /**
- * Cross-platform ECharts wrapper using @wuba/react-native-echarts
- * Works on both web (via react-native-web) and iOS/Android
+ * Native-specific ECharts implementation (iOS/Android)
+ * Uses @wuba/react-native-echarts SvgChart with SVGRenderer
  */
 import React, { useRef, useEffect } from 'react';
-import { View, StyleSheet, Dimensions, Platform } from 'react-native';
+import { View, StyleSheet, Dimensions } from 'react-native';
 import * as echarts from 'echarts/core';
 import { LineChart, BarChart, ScatterChart, HeatmapChart } from 'echarts/charts';
 import {
@@ -14,9 +14,10 @@ import {
   VisualMapComponent,
   DataZoomComponent,
 } from 'echarts/components';
-import { SvgChart, SVGRenderer } from '@wuba/react-native-echarts';
+// Import from svgChart subpath to avoid pulling in @shopify/react-native-skia dependency
+import SvgChart, { SVGRenderer } from '@wuba/react-native-echarts/svgChart';
 
-// Register ECharts components - same for all platforms
+// Register ECharts components for native
 echarts.use([
   SVGRenderer,
   LineChart,
@@ -38,10 +39,9 @@ export interface EChartProps {
   style?: any;
 }
 
-// Helper to check if option is valid (has at least a series or xAxis)
+// Helper to check if option is valid
 function isValidOption(option: echarts.EChartsCoreOption): boolean {
   if (!option || typeof option !== 'object') return false;
-  // Check if option has meaningful content
   return !!(
     (option as any).series ||
     (option as any).xAxis ||
@@ -50,19 +50,14 @@ function isValidOption(option: echarts.EChartsCoreOption): boolean {
   );
 }
 
-/**
- * Unified EChart component using @wuba/react-native-echarts SvgChart
- * Works on web (via react-native-web) and iOS/Android
- */
 export function EChart({ option, width, height = 300, style }: EChartProps) {
   const chartRef = useRef<any>(null);
   const chartInstance = useRef<echarts.ECharts | null>(null);
   
   const screenWidth = Dimensions.get('window').width;
-  const chartWidth = width ?? (Platform.OS === 'web' ? undefined : screenWidth - 32);
+  const chartWidth = width ?? screenWidth - 32;
 
   useEffect(() => {
-    // Don't initialize with empty/invalid options
     if (!chartRef.current || !isValidOption(option)) return;
     
     // Dispose existing instance
@@ -71,53 +66,28 @@ export function EChart({ option, width, height = 300, style }: EChartProps) {
       chartInstance.current = null;
     }
     
-    // Initialize chart with appropriate dimensions
-    const initOptions: any = {
+    const chart = echarts.init(chartRef.current, 'light', {
       renderer: 'svg',
+      width: chartWidth,
       height,
-    };
-    
-    // Only set width if known (native) - web handles auto-sizing
-    if (chartWidth !== undefined) {
-      initOptions.width = chartWidth;
-    }
-    
-    const chart = echarts.init(chartRef.current, 'light', initOptions);
+    });
     chartInstance.current = chart;
     chart.setOption(option);
 
-    // Handle resize (web only)
-    const handleResize = () => {
-      if (chartInstance.current) {
-        chartInstance.current.resize();
-      }
-    };
-    
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.addEventListener('resize', handleResize);
-    }
-
     return () => {
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        window.removeEventListener('resize', handleResize);
-      }
       chart?.dispose();
     };
   }, [option, chartWidth, height]);
 
-  // Update on option change (only if valid)
+  // Update on option change
   useEffect(() => {
     if (chartInstance.current && isValidOption(option)) {
       chartInstance.current.setOption(option, true);
     }
   }, [option]);
 
-  const containerStyle = Platform.OS === 'web'
-    ? { width: chartWidth || '100%', height }
-    : { width: chartWidth, height };
-
   return (
-    <View style={[styles.container, containerStyle, style]}>
+    <View style={[styles.container, { width: chartWidth, height }, style]}>
       <SvgChart ref={chartRef} />
     </View>
   );
