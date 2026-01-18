@@ -19,6 +19,18 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   if (isPublicRoute(req)) return;
+
+  // Check for GPT API key auth (Bearer token)
+  const authHeader = req.headers.get('Authorization') || '';
+  if (authHeader.startsWith('Bearer ')) {
+    const token = authHeader.slice(7);
+    if (process.env.GPT_API_KEY && token === process.env.GPT_API_KEY) {
+      // Valid GPT key - allow request to proceed
+      return NextResponse.next();
+    }
+  }
+
+  // Fall back to Clerk auth
   const { userId } = await auth();
   if (!userId) {
     // For API routes, return 401 instead of redirect
