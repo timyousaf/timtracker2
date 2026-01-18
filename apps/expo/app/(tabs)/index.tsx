@@ -8,8 +8,10 @@ import {
   SafeAreaView,
   ActivityIndicator,
   RefreshControl,
+  TouchableOpacity,
+  Modal,
+  Platform,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import {
   HealthChart,
   SleepChart,
@@ -98,6 +100,9 @@ export default function HomeScreen() {
 
   // Track if initial load is complete to avoid duplicate fetches
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+
+  // Picker modal state
+  const [pickerVisible, setPickerVisible] = useState(false);
 
   const loadAllData = useCallback(async (range: DateRange) => {
     setError(null);
@@ -223,22 +228,59 @@ export default function HomeScreen() {
     );
   }
 
+  // Get the label for the current selection
+  const selectedLabel = DATE_RANGE_OPTIONS.find(o => o.value === selectedRange)?.label || 'Select Range';
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Date Range Selector - Fixed Header */}
       <View style={styles.header}>
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={selectedRange}
-            onValueChange={(value) => setSelectedRange(value)}
-            style={styles.picker}
+          <TouchableOpacity
+          style={styles.pickerButton}
+          onPress={() => setPickerVisible(true)}
           >
-            {DATE_RANGE_OPTIONS.map((option) => (
-              <Picker.Item key={option.value} label={option.label} value={option.value} />
-            ))}
-          </Picker>
+          <Text style={styles.pickerButtonText}>{selectedLabel}</Text>
+          <Text style={styles.pickerChevron}>▼</Text>
+          </TouchableOpacity>
         </View>
-      </View>
+
+      {/* Picker Modal */}
+      <Modal
+        visible={pickerVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPickerVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setPickerVisible(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Date Range</Text>
+            {DATE_RANGE_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  styles.modalOption,
+                  selectedRange === option.value && styles.modalOptionSelected,
+                ]}
+                onPress={() => {
+                  setSelectedRange(option.value);
+                  setPickerVisible(false);
+                }}
+              >
+                <Text style={[
+                  styles.modalOptionText,
+                  selectedRange === option.value && styles.modalOptionTextSelected,
+                ]}>
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -408,15 +450,64 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 12,
   },
-  pickerContainer: {
+  pickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: '#f5f5f5',
     borderRadius: 8,
-    overflow: 'hidden',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
-  picker: {
-    height: 44,
+  pickerButtonText: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
+  },
+  pickerChevron: {
+    fontSize: 12,
+    color: '#666',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    width: '80%',
+    maxWidth: 300,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 16,
+    textAlign: 'center',
+    color: '#222',
+  },
+  modalOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  modalOptionSelected: {
+    backgroundColor: '#0066cc',
+  },
+  modalOptionText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  modalOptionTextSelected: {
+    color: '#fff',
+    fontWeight: '500',
   },
   centered: {
     flex: 1,
