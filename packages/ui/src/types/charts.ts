@@ -159,11 +159,16 @@ export interface ExerciseProgressChartProps {
 // Meal/Diet Scores
 // ============================================
 
+export interface MealLogDetail {
+  description: string;
+}
+
 export interface DailyMealScoreDataPoint {
   date: string;
   score: number;
+  movingAvg?: number | null;
   comment?: string;
-  meals: string[];
+  meals: (string | MealLogDetail)[];
 }
 
 export interface MealScoreChartProps {

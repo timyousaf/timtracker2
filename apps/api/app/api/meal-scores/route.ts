@@ -112,13 +112,27 @@ export async function GET(request: NextRequest) {
       mealsByDate.set(row.date, meals);
     }
 
-    // Combine scores with meals
-    const data: DailyMealScoreDataPoint[] = scoreResult.rows.map(row => ({
+    // Combine scores with meals and calculate moving average
+    const rawData = scoreResult.rows.map(row => ({
       date: row.date,
       score: row.health_score,
       comment: row.health_comment || undefined,
       meals: mealsByDate.get(row.date) || [],
     }));
+
+    // Calculate 7-day moving average
+    const data: DailyMealScoreDataPoint[] = rawData.map((row, index) => {
+      // Get the last 7 days of scores (including current)
+      const windowStart = Math.max(0, index - 6);
+      const windowData = rawData.slice(windowStart, index + 1);
+      const sum = windowData.reduce((acc, d) => acc + d.score, 0);
+      const movingAvg = windowData.length > 0 ? sum / windowData.length : null;
+
+      return {
+        ...row,
+        movingAvg,
+      };
+    });
 
     const response: MealScoresApiResponse = { data };
     setCached(cacheKey, response);

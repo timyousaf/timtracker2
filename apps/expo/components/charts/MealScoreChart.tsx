@@ -51,9 +51,11 @@ export function MealScoreChart({ data, loading }: MealScoreChartProps) {
           if (meals.length > 0) {
             lines.push('<br/><b>Meals:</b>');
             meals.slice(0, 5).forEach(m => {
-              const desc = m.description.length > 40 
-                ? m.description.substring(0, 40) + '...' 
-                : m.description;
+              // meals can be strings or objects with description property
+              const mealDesc = typeof m === 'string' ? m : m.description;
+              const desc = mealDesc.length > 40 
+                ? mealDesc.substring(0, 40) + '...' 
+                : mealDesc;
               lines.push(desc);
             });
           }
