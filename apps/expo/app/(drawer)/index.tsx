@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   Modal,
 } from 'react-native';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
 import {
   DateRange,
   DATE_RANGE_OPTIONS,
@@ -62,9 +63,14 @@ const EXERCISES = [
 
 export default function HomeScreen() {
   const { getToken } = useAuth();
+  const navigation = useNavigation();
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const openDrawer = () => {
+    navigation.dispatch(DrawerActions.openDrawer());
+  };
 
   // Date range selector
   const [selectedRange, setSelectedRange] = useState<DateRange>(DEFAULT_DATE_RANGE);
@@ -237,16 +243,26 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Date Range Selector - Fixed Header */}
+      {/* Top Nav Bar with Hamburger Menu and Date Range */}
       <View style={styles.header}>
-          <TouchableOpacity
+        <TouchableOpacity
+          style={styles.hamburgerButton}
+          onPress={openDrawer}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <View style={styles.hamburgerLine} />
+          <View style={styles.hamburgerLine} />
+          <View style={styles.hamburgerLine} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={styles.pickerButton}
           onPress={() => setPickerVisible(true)}
-          >
+        >
           <Text style={styles.pickerButtonText}>{selectedLabel}</Text>
           <Text style={styles.pickerChevron}>▼</Text>
-          </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
+      </View>
 
       {/* Picker Modal */}
       <Modal
@@ -403,9 +419,6 @@ export default function HomeScreen() {
           loading={loadingHealth}
         />
 
-        {/* ===== SECTION 3: EXERCISE DETAILS ===== */}
-        <Text style={styles.sectionHeader}>Exercise Details</Text>
-
         {/* 12. Weekly Workouts */}
         <WorkoutsChart
           data={weeklyWorkouts}
@@ -421,9 +434,6 @@ export default function HomeScreen() {
           chartType="bar"
           loading={loadingExercise}
         />
-
-        {/* ===== SECTION 4: STRENGTH ===== */}
-        <Text style={styles.sectionHeader}>Strength</Text>
 
         {EXERCISES.map(ex => (
           <ExerciseProgressChart
@@ -446,13 +456,28 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.background,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
+    gap: spacing[4],
+  },
+  hamburgerButton: {
+    width: 24,
+    height: 18,
+    justifyContent: 'space-between',
+  },
+  hamburgerLine: {
+    width: 24,
+    height: 2,
+    backgroundColor: colors.foreground,
+    borderRadius: 1,
   },
   pickerButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

@@ -25,6 +25,8 @@ config.resolver.extraNodeModules = {
   ...config.resolver.extraNodeModules,
   'buffer/': require.resolve('buffer/'),
   'buffer': require.resolve('buffer/'),
+  // Explicitly resolve react-native-svg from monorepo root for lucide-react-native
+  'react-native-svg': path.resolve(monorepoRoot, 'node_modules/react-native-svg'),
 };
 
 module.exports = config;

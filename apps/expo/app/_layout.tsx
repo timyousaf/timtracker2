@@ -1,9 +1,11 @@
+import 'react-native-gesture-handler';
 import { ClerkProvider, ClerkLoaded, useAuth } from '@clerk/clerk-expo';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Geist_400Regular } from '@expo-google-fonts/geist';
 import { tokenCache } from '@/lib/tokenCache';
 import { colors } from '@/lib/theme';
@@ -28,11 +30,11 @@ function AuthGuard() {
   useEffect(() => {
     if (!isLoaded) return;
 
-    const inAuthGroup = segments[0] === '(tabs)';
+    const inAuthGroup = segments[0] === '(drawer)';
 
     if (isSignedIn && !inAuthGroup) {
       // Signed in but not in protected area, redirect to home
-      router.replace('/(tabs)');
+      router.replace('/(drawer)');
     } else if (!isSignedIn && inAuthGroup) {
       // Not signed in but in protected area, redirect to sign-in
       router.replace('/sign-in');
@@ -71,11 +73,13 @@ export default function RootLayout() {
   }
 
   return (
-    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <ClerkLoaded>
-        <AuthGuard />
-      </ClerkLoaded>
-    </ClerkProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+        <ClerkLoaded>
+          <AuthGuard />
+        </ClerkLoaded>
+      </ClerkProvider>
+    </GestureHandlerRootView>
   );
 }
 

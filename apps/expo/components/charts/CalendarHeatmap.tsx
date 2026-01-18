@@ -95,7 +95,7 @@ export function CalendarHeatmap({
         min: 0,
         max: maxValue,
         inRange: {
-          color: [colors.backgroundSubtle, mainColor],
+          color: [colors.background, mainColor],
         },
       },
       calendar: {

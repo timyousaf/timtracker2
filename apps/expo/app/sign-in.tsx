@@ -35,7 +35,7 @@ export default function SignInScreen() {
 
       if (createdSessionId && setActive) {
         await setActive({ session: createdSessionId });
-        router.replace('/(tabs)');
+        router.replace('/(drawer)');
       }
     } catch (err) {
       console.error('Google OAuth error:', err);
@@ -49,7 +49,6 @@ export default function SignInScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>TimTracker</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
 
         {error && (
           <View style={styles.errorContainer}>
@@ -88,14 +87,8 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     color: colors.foreground,
     textAlign: 'center',
-    marginBottom: spacing[2],
-    letterSpacing: -1,
-  },
-  subtitle: {
-    fontSize: fontSizes.base,
-    color: colors.foregroundMuted,
-    textAlign: 'center',
     marginBottom: spacing[12],
+    letterSpacing: -1,
   },
   errorContainer: {
     backgroundColor: '#fef2f2',
