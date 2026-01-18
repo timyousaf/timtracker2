@@ -88,10 +88,10 @@ export function WorkoutsChart({ data, loading }: WorkoutsChartProps) {
           });
           
           if (total > 0) {
-            lines.splice(1, 0, `<b>Total: ${total} min</b>`);
+            lines.splice(1, 0, `Total: ${total} min`);
           }
           
-          return lines.join('<br/>');
+          return lines.join('\n');
         },
       },
       legend: {

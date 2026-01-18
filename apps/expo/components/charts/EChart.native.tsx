@@ -56,7 +56,8 @@ export function EChart({ option, width, height = 300, style }: EChartProps) {
   const chartInstance = useRef<echarts.ECharts | null>(null);
   
   const screenWidth = Dimensions.get('window').width;
-  const chartWidth = width ?? screenWidth - 32;
+  // Account for container padding (16px) + card padding (16px) on each side = 64px total
+  const chartWidth = width ?? screenWidth - 64;
 
   useEffect(() => {
     if (!chartRef.current || !isValidOption(option)) return;

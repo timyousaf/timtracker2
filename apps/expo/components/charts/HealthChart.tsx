@@ -69,7 +69,7 @@ export function HealthChart({
           const date = format(parseISO(dates[idx]), 'MMM d, yyyy');
           const value = values[idx]?.toFixed(1) ?? 'N/A';
           const avg = movingAvg[idx]?.toFixed(1) ?? 'N/A';
-          return `${date}<br/>${title}: ${value} ${unit}<br/>7-day Avg: ${avg} ${unit}`;
+          return `${date}\n${title}: ${value} ${unit}\n7-day Avg: ${avg} ${unit}`;
         },
       },
       grid: {

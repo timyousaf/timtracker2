@@ -61,7 +61,7 @@ export function SleepChart({ data, loading }: SleepChartProps) {
           const hrs = Math.floor(totalMinutes / 60);
           const mins = totalMinutes % 60;
           const avg = movingAvg[idx]?.toFixed(1) ?? 'N/A';
-          return `${date}<br/>Sleep: ${hrs}h ${mins}m<br/>7-day Avg: ${avg}h`;
+          return `${date}\nSleep: ${hrs}h ${mins}m\n7-day Avg: ${avg}h`;
         },
       },
       grid: {

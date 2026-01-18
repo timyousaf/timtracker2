@@ -107,7 +107,7 @@ export function CalendarHeatmap({
           const [date, value] = params.data;
           const point = data.points.find(p => p.date === date);
           
-          let lines = [`<b>${date}</b>`, `${value} ${unit}`];
+          let lines = [date, `${value} ${unit}`];
           
           // Add score info for diet calendar
           if (useScoreColors && point?.score !== undefined && point?.score !== null) {
@@ -115,21 +115,21 @@ export function CalendarHeatmap({
           }
           
           if (point?.workouts?.length) {
-            lines.push('<br/><b>Workouts:</b>');
+            lines.push('', 'Workouts:');
             point.workouts.forEach(w => {
               lines.push(`${w.type}: ${Math.round(w.durationMinutes)} min`);
             });
           }
           
           if (point?.interactions?.length) {
-            lines.push('<br/><b>Interactions:</b>');
+            lines.push('', 'Interactions:');
             point.interactions.slice(0, 3).forEach(i => {
               lines.push(`${i.personName} (${i.interactionType})`);
             });
           }
           
           if (point?.meals?.length) {
-            lines.push('<br/><b>Meals:</b>');
+            lines.push('', 'Meals:');
             point.meals.slice(0, 3).forEach(m => {
               const desc = m.description.length > 30 
                 ? m.description.substring(0, 30) + '...' 
@@ -138,7 +138,7 @@ export function CalendarHeatmap({
             });
           }
           
-          return lines.join('<br/>');
+          return lines.join('\n');
         },
       },
       visualMap: visualMapConfig,

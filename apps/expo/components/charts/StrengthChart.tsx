@@ -37,18 +37,18 @@ export function StrengthChart({ data, loading }: StrengthChartProps) {
           const workouts = data.workouts?.[idx] || [];
           
           let lines = [
-            `<b>${week}</b>`,
-            `<b>${volume.toLocaleString()} lbs</b>`,
+            week,
+            `${volume.toLocaleString()} lbs`,
           ];
           
           if (workouts.length > 0) {
-            lines.push('<br/><b>Workouts:</b>');
+            lines.push('', 'Workouts:');
             workouts.forEach(w => {
               lines.push(`${w.title}: ${w.volume.toLocaleString()} lbs`);
             });
           }
           
-          return lines.join('<br/>');
+          return lines.join('\n');
         },
       },
       grid: {

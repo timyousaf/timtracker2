@@ -51,19 +51,19 @@ export function ExerciseProgressChart({
           const sets = data[idx]?.sets || [];
           
           let lines = [
-            `<b>${date}</b>`,
+            date,
             `${useReps ? 'Total Reps' : 'Total Volume'}: ${vol.toLocaleString()}${useReps ? '' : ' lbs'}`,
             `Max Weight: ${max} lbs`,
           ];
           
           if (sets.length > 0) {
-            lines.push('<br/><b>Sets:</b>');
+            lines.push('', 'Sets:');
             sets.forEach((s, i) => {
               lines.push(`Set ${i + 1}: ${s.reps} reps @ ${s.weight} lbs`);
             });
           }
           
-          return lines.join('<br/>');
+          return lines.join('\n');
         },
       },
       grid: {
