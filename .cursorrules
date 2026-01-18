@@ -1,0 +1,121 @@
+# Cursor AI Rules for TimTracker2
+
+## Project Context
+
+Monorepo with:
+- **apps/api**: Next.js 14 API server (Clerk auth, Neon PostgreSQL)
+- **apps/expo**: Expo React Native app (web + iOS, Clerk auth)
+- **packages/shared**: Shared TypeScript types
+
+Deployed on Vercel (API + web) and TestFlight (iOS).
+
+For environment variables, see `README.md`.
+
+## Code Style
+
+- TypeScript strict mode
+- Functional components with TypeScript interfaces for props
+
+### API App (apps/api)
+- Server components by default; `'use client'` only when needed
+- API routes in `app/api/[route]/route.ts`
+
+### Expo App (apps/expo)
+- React Native components with StyleSheet
+- File-based routing via expo-router in `app/`
+- Use `@clerk/clerk-expo` for auth
+
+## Authentication Patterns
+
+### API Route (apps/api)
+```typescript
+import { auth } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+
+const { userId } = await auth();
+if (!userId) {
+  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+}
+```
+
+### Expo Component (apps/expo)
+```typescript
+import { useAuth } from '@clerk/clerk-expo';
+
+const { userId, isLoaded, getToken } = useAuth();
+
+// For API calls, get the token:
+const token = await getToken();
+fetch('/api/endpoint', {
+  headers: { Authorization: `Bearer ${token}` }
+});
+```
+
+## Database Pattern (API only)
+
+```typescript
+import { getPool } from '@/lib/db';
+
+const pool = getPool();
+const result = await pool.query('SELECT * FROM table_name LIMIT 10');
+```
+
+## Shared Types
+
+Define types in `packages/shared/src/types.ts` and import:
+```typescript
+import type { HealthMetric } from '@timtracker/shared';
+```
+
+## API Route Template
+
+```typescript
+// apps/api/app/api/[route]/route.ts
+import { auth } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+import { getPool } from '@/lib/db';
+import type { SomeType } from '@timtracker/shared';
+
+export async function GET() {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  
+  const pool = getPool();
+  const result = await pool.query('SELECT * FROM table_name LIMIT 10');
+  return NextResponse.json({ data: result.rows });
+}
+```
+
+## When Adding Features
+
+1. Check existing patterns in the codebase
+2. Update `apps/api/middleware.ts` if adding API routes
+3. Add shared types to `packages/shared/src/types.ts`
+4. Create PRD in `docs/PRDs/` for major features
+5. Update `docs/ARCHITECTURE.md` for architectural changes
+
+## Error Handling
+
+- Try-catch in async functions
+- Appropriate HTTP status codes
+- User-friendly error messages
+
+## File Structure
+
+```
+timtracker2/
+├── apps/
+│   ├── api/              # Next.js API server
+│   │   ├── app/api/      # API routes
+│   │   ├── lib/db.ts     # Database connection
+│   │   └── middleware.ts # Auth middleware
+│   └── expo/             # Expo app (web + iOS)
+│       ├── app/          # Expo Router screens
+│       ├── components/   # React Native components
+│       └── lib/          # API client, utilities
+├── packages/
+│   └── shared/           # Shared TypeScript types
+└── docs/                 # Documentation
+```

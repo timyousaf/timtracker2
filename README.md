@@ -1,118 +1,94 @@
 # TimTracker2
 
-A time tracking application built with Next.js, TypeScript, and Clerk authentication.
+A personal health tracking application with web and iOS apps, sharing the same API and authentication.
 
-## Project Overview
+## Quick Start
 
-TimTracker2 is a modern web application for tracking time, built as a monorepo using npm workspaces. The application uses Next.js 14 with the App Router, Clerk for authentication, and is designed to be deployed on Vercel.
+```bash
+# Install dependencies
+npm install
 
-## Tech Stack
+# Start both API and Expo dev servers
+npm run dev
 
-- **Frontend Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript
-- **Authentication**: Clerk
-- **Database**: Neon (PostgreSQL)
-- **Monorepo**: npm workspaces
-- **Deployment**: Vercel
+# Or run separately:
+npm run dev:api   # API on http://localhost:3001
+npm run dev:expo  # Expo on http://localhost:8081
+```
 
 ## Project Structure
 
 ```
 timtracker2/
 ├── apps/
-│   └── web/                    # Next.js web application
-│       ├── app/                # App Router pages and routes
-│       │   ├── api/            # API routes
-│       │   │   └── health-metrics/  # Health metrics API
-│       │   ├── health-metrics/ # Health metrics page (protected)
-│       │   ├── sign-in/        # Clerk sign-in pages
-│       │   ├── sign-up/        # Clerk sign-up pages
-│       │   ├── layout.tsx      # Root layout with ClerkProvider
-│       │   └── page.tsx        # Home page
-│       ├── middleware.ts       # Authentication middleware
-│       ├── lib/                # Utility libraries
-│       │   └── db.ts           # Database connection pool
-│       └── package.json
-├── docs/                       # Documentation
-│   ├── ARCHITECTURE.md         # System architecture
-│   ├── .cursorrules            # Cursor AI rules
-│   └── PRDs/                   # Product Requirements Documents
-├── package.json                # Root workspace config
-└── vercel.json                 # Vercel deployment config
-```
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+ and npm
-- Clerk account (for authentication)
-- Neon account (for database)
-
-### Installation
-
-```bash
-# Install dependencies
-npm install
-
-# Set up environment variables (see Environment Variables section below)
-# Create apps/web/.env.local with your credentials
-```
-
-### Development
-
-```bash
-# Start development server
-npm run dev
-
-# The app will be available at http://localhost:3000
-```
-
-### Build
-
-```bash
-# Build for production
-npm run build
-
-# Start production server
-npm start
+│   ├── api/              # Next.js 14 API server
+│   │   ├── app/api/      # API routes
+│   │   ├── lib/db.ts     # Database connection
+│   │   └── middleware.ts # Auth middleware
+│   └── expo/             # Expo app (web + iOS)
+│       ├── app/          # Expo Router screens
+│       ├── components/   # React Native components
+│       └── lib/          # API client, utilities
+├── packages/
+│   └── shared/           # Shared TypeScript types
+├── scripts/              # Migration & utility scripts (Python)
+└── docs/                 # Documentation
 ```
 
 ## Environment Variables
 
-### Clerk Authentication
-
-The following environment variables are required for Clerk authentication:
+### API (apps/api/.env.local)
 
 ```
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=...
-CLERK_SECRET_KEY=...
-```
-
-### Neon Database
-
-The following environment variable is required for database access:
-
-```
+CLERK_SECRET_KEY=sk_...
 NEON_DATABASE_URL=postgresql://user:password@host/database?sslmode=require
 ```
 
-Get your Neon database URL from your Neon project dashboard.
+### Expo (apps/expo/.env)
 
-**On Vercel**: Set these under Project Settings → Environment Variables.
+```
+EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
+EXPO_PUBLIC_API_URL=http://localhost:3001  # Only for local dev
+```
 
-**Locally**: Create `apps/web/.env.local` with the above values.
+Get credentials from [Clerk Dashboard](https://dashboard.clerk.com) and [Neon Console](https://console.neon.tech).
+
+## Deployment
+
+### Web (Vercel)
+
+Two Vercel projects from this repo:
+1. **API**: Root directory `apps/api` → deploys to `timtracker-api.vercel.app`
+2. **Web**: Root directory `apps/expo` → deploys to your main domain
+
+### iOS (TestFlight)
+
+```bash
+cd apps/expo
+eas build --profile production --platform ios
+eas submit --platform ios
+```
+
+## Data Migration
+
+To migrate data from the old timtracker (GCP Cloud SQL) to this project (Neon):
+
+```bash
+cd scripts
+poetry install
+poetry run python migrate_from_gcp.py
+```
+
+See [scripts/README.md](./scripts/README.md) for full details and required environment variables.
 
 ## Documentation
 
-- [Architecture Documentation](./docs/ARCHITECTURE.md) - System architecture and design decisions
-- [Cursor AI Rules](./docs/.cursorrules) - Guidelines for working with Cursor AI
-- [Feature PRDs](./docs/PRDs/) - Product Requirements Documents for features
+- **[Architecture](./docs/ARCHITECTURE.md)** — System design, patterns, and decisions
+- **[AI Rules](./.cursorrules)** — Guidelines for AI-assisted development
+- **[PRDs](./docs/PRDs/)** — Feature requirements and decision records
 
-## Contributing
+## Tech Stack
 
-When adding new features:
-1. Create a PRD in `docs/PRDs/` documenting the feature, rationale, and decisions
-2. Follow the architecture patterns outlined in `docs/ARCHITECTURE.md`
-3. Ensure authentication is properly configured in `middleware.ts` for new routes
-4. Update relevant documentation
+- **API**: Next.js 14 (App Router) · TypeScript · Clerk · Neon PostgreSQL · Vercel
+- **App**: Expo SDK 52 · React Native · Expo Router · Clerk · TestFlight
+- **Shared**: TypeScript types

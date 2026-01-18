@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "timtracker2-scripts"
+version = "0.1.0"
+description = "Migration and utility scripts for timtracker2"
+authors = ["Tim Yousaf"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.10"
+sqlalchemy = "^2.0.0"
+pg8000 = "^1.30.0"           # For GCP Cloud SQL connections
+psycopg2-binary = "^2.9.9"   # For Neon connections
+cloud-sql-python-connector = "^1.5.0"  # For GCP Cloud SQL IAM auth
+google-auth = "^2.0.0"       # Required for IAM auth
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
