@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPool } from '@/lib/db';
 import { getCached, setCached, createCacheKey } from '@/lib/cache';
 import { hoursToReadable } from '@/lib/aggregation';
-import type { SleepApiResponse, SleepDataPoint } from '@timtracker/ui/types';
+import type { SleepApiResponse, SleepDataPoint } from '@/lib/types';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';

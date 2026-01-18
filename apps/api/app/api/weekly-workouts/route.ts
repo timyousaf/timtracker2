@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPool } from '@/lib/db';
 import { getCached, setCached, createCacheKey } from '@/lib/cache';
 import { getWeekStart, getWeekLabel } from '@/lib/aggregation';
-import type { WeeklyWorkoutsApiResponse, WorkoutSeries } from '@timtracker/ui/types';
+import type { WeeklyWorkoutsApiResponse, WorkoutSeries } from '@/lib/types';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';

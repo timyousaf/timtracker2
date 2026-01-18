@@ -8,7 +8,7 @@ import type {
   WorkoutDetail,
   InteractionDetail,
   MealDetail,
-} from '@timtracker/ui/types';
+} from '@/lib/types';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';

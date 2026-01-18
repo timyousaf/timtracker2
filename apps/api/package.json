@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.32.2",
-    "@timtracker/ui": "*",
     "@types/pg": "^8.15.6",
     "next": "14.2.25",
     "pg": "^8.16.3",
