@@ -42,13 +42,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Build query - get raw sleep segments
+    // Note: apple_health_sleep has no 'date' column, so we derive it from end_time
+    // (sleep is typically assigned to the day it ends on)
     const pool = getPool();
     const params: string[] = [];
     let paramIndex = 1;
     
     let query = `
       SELECT 
-        date::text as date,
+        DATE(end_time AT TIME ZONE 'America/New_York')::text as date,
         start_time,
         end_time,
         value as sleep_type
@@ -57,18 +59,18 @@ export async function GET(request: NextRequest) {
     `;
 
     if (start) {
-      query += ` AND date >= $${paramIndex}`;
+      query += ` AND DATE(end_time AT TIME ZONE 'America/New_York') >= $${paramIndex}`;
       params.push(start);
       paramIndex++;
     }
 
     if (end) {
-      query += ` AND date <= $${paramIndex}`;
+      query += ` AND DATE(end_time AT TIME ZONE 'America/New_York') <= $${paramIndex}`;
       params.push(end);
       paramIndex++;
     }
 
-    query += ' ORDER BY date, start_time';
+    query += ' ORDER BY end_time';
 
     // Execute query
     const result = await pool.query<{
