@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { getPool } from '@/lib/db';
-import type { HealthMetric, HealthMetricsResponse } from '@timtracker/shared';
+import type { HealthMetric, HealthMetricsResponse } from '@/lib/types';
 
 /**
  * GET /api/health-metrics

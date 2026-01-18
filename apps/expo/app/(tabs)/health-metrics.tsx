@@ -28,12 +28,12 @@ export default function HealthMetricsScreen() {
       console.error('Error fetching metrics:', err);
       setError(err instanceof Error ? err.message : 'Failed to load metrics');
     }
-  }, [getToken]);
+  }, []); // getToken is stable from useAuth, no need to include
 
   useEffect(() => {
     setLoading(true);
     loadMetrics().finally(() => setLoading(false));
-  }, [loadMetrics]);
+  }, []); // Only run once on mount
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
