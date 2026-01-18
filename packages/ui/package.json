@@ -7,7 +7,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./charts": "./src/charts/index.ts",
-    "./types": "./src/types/index.ts"
+    "./types": "./src/types/index.ts",
+    "./utils": "./src/utils/index.ts"
   },
   "dependencies": {
     "echarts": "^5.5.0",

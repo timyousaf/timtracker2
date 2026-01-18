@@ -31,17 +31,10 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="health-metrics"
+        name="settings"
         options={{
-          title: 'Health',
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>❤️</Text>,
-        }}
-      />
-      <Tabs.Screen
-        name="charts"
-        options={{
-          title: 'Charts',
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>📊</Text>,
+          title: 'Settings',
+          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>⚙️</Text>,
         }}
       />
     </Tabs>

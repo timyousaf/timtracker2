@@ -171,11 +171,3 @@ export interface MealScoreChartProps {
   loading?: boolean;
 }
 
-// ============================================
-// Date Range
-// ============================================
-
-export interface DateRange {
-  start: Date;
-  end: Date;
-}
