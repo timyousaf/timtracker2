@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.1.0
 info:
   title: TimTracker Query API
   description: API for querying TimTracker tables and summarizing health data. Exposes both raw table access and analytic endpoints. Use /api/schema to discover tables, columns, and endpoints.
@@ -20,6 +20,15 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  tables:
+                    type: object
+                    additionalProperties: true
+                  analyticEndpoints:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
 
   /api/schema/{table}/{column}/values:
     get:
@@ -96,6 +105,7 @@ paths:
                 type: array
                 items:
                   type: object
+                  additionalProperties: true
 
   /api/sleep:
     get:
@@ -111,6 +121,20 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                        hours:
+                          type: number
+                        readable:
+                          type: string
+                        movingAvg:
+                          type: number
 
   /api/metrics:
     get:
@@ -139,6 +163,18 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                        value:
+                          type: number
+                        movingAvg:
+                          type: number
 
   /api/weekly-workouts:
     get:
@@ -154,6 +190,20 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      type: string
+                  series:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                  maxHeartRate:
+                    type: array
+                    items:
+                      type: integer
 
   /api/calendar-heatmap:
     get:
@@ -180,6 +230,16 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  startDateStr:
+                    type: string
+                  endDateStr:
+                    type: string
+                  points:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
 
   /api/meal-scores:
     get:
@@ -194,6 +254,23 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                        score:
+                          type: number
+                        movingAvg:
+                          type: number
+                        meals:
+                          type: array
+                          items:
+                            type: object
+                            additionalProperties: true
 
   /api/log/meal:
     post:
@@ -262,6 +339,13 @@ paths:
       responses:
         "200":
           description: Meal updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
     delete:
       summary: Delete a previously logged meal
       operationId: deleteMeal
@@ -276,6 +360,13 @@ paths:
       responses:
         "200":
           description: Meal deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
 
   /api/people:
     get:
@@ -298,6 +389,14 @@ paths:
                 type: array
                 items:
                   type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    note:
+                      type: string
+                  additionalProperties: true
     post:
       summary: Create or update a person
       operationId: createPerson
@@ -381,6 +480,13 @@ paths:
       responses:
         "200":
           description: Person updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
 
   /api/interactions:
     get:
@@ -415,6 +521,17 @@ paths:
                 type: array
                 items:
                   type: object
+                  properties:
+                    id:
+                      type: integer
+                    date:
+                      type: string
+                    person_name:
+                      type: string
+                    interaction_type:
+                      type: string
+                    note:
+                      type: string
 
   /api/log/interaction:
     post:
@@ -438,6 +555,8 @@ paths:
                           type: integer
                       people_notes:
                         type: object
+                        additionalProperties:
+                          type: string
                       date:
                         type: string
                         format: date
@@ -490,6 +609,8 @@ paths:
                     type: integer
                 people_notes:
                   type: object
+                  additionalProperties:
+                    type: string
                 date:
                   type: string
                   format: date
@@ -503,6 +624,13 @@ paths:
       responses:
         "200":
           description: Interaction updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
     delete:
       summary: Delete a social interaction
       operationId: deleteInteraction
@@ -517,6 +645,13 @@ paths:
       responses:
         "200":
           description: Interaction deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
 
   /api/daily-meal-scores:
     get:
@@ -546,6 +681,13 @@ paths:
                 type: array
                 items:
                   type: object
+                  properties:
+                    date:
+                      type: string
+                    health_score:
+                      type: integer
+                    health_comment:
+                      type: string
     post:
       summary: Upsert a daily meal score
       operationId: upsertDailyMealScore
@@ -570,6 +712,13 @@ paths:
       responses:
         "200":
           description: Score saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
 
 components:
   securitySchemes:
@@ -577,3 +726,9 @@ components:
       type: http
       scheme: bearer
       description: Bearer token for API authentication
+  schemas:
+    Status:
+      type: object
+      properties:
+        status:
+          type: string

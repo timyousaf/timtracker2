@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPool } from '@/lib/db';
+import { getUserId } from '@/lib/auth';
 
 /**
  * GET /api/daily-meal-scores
@@ -57,6 +58,11 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const userId = await getUserId();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { date, health_score, health_comment } = body;
 
@@ -66,13 +72,13 @@ export async function POST(request: NextRequest) {
 
     const pool = getPool();
     await pool.query(
-      `INSERT INTO daily_meal_scores (date, health_score, health_comment)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (date) DO UPDATE SET
+      `INSERT INTO daily_meal_scores (user_id, date, health_score, health_comment)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (user_id, date) DO UPDATE SET
          health_score = COALESCE(EXCLUDED.health_score, daily_meal_scores.health_score),
          health_comment = COALESCE(EXCLUDED.health_comment, daily_meal_scores.health_comment),
          updated_at = NOW()`,
-      [date, health_score ?? null, health_comment ?? null]
+      [userId, date, health_score ?? null, health_comment ?? null]
     );
 
     return NextResponse.json({ status: 'ok' });
