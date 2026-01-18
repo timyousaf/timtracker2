@@ -16,17 +16,28 @@ Monorepo with shared code between web and iOS. API-first design with all data fe
 │         Shared Components                           │
 │         (ECharts, UI)                              │
 └─────────────────────┬───────────────────────────────┘
-                      │ fetch()
+                      │ fetch() + Clerk token
                       ▼
 ┌─────────────────────────────────────────────────────┐
 │              Next.js API (Vercel)                   │
 │  ┌─────────────────────────────────────────────┐   │
 │  │  /api/sleep, /api/metrics, /api/workouts    │   │
 │  │  /api/exercise-progress, /api/meal-scores   │   │
+│  │  /api/log/meal, /api/log/interaction        │   │
 │  └─────────────────────┬───────────────────────┘   │
 │                        │                            │
 │                        ▼                            │
-│              Clerk Auth + Neon PostgreSQL           │
+│     Clerk Auth OR GPT_API_KEY → Neon PostgreSQL    │
+└─────────────────────────────────────────────────────┘
+                      ▲
+                      │ fetch() + GPT_API_KEY
+┌─────────────────────┴───────────────────────────────┐
+│              ChatGPT Custom GPT                     │
+│  ┌─────────────────────────────────────────────┐   │
+│  │  OpenAPI Actions (gpt/openapi.yaml)         │   │
+│  │  System Prompt (gpt/chatgpt.PROMPT)         │   │
+│  └─────────────────────────────────────────────┘   │
+│              Natural language → API calls           │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -54,7 +65,40 @@ Date range filling: APIs fill gaps with `null` values so charts show proper x-ax
 
 - **API**: Clerk middleware + `auth()` in route handlers
 - **Expo**: Clerk React Native SDK with `expo-secure-store` for token caching
+- **ChatGPT**: Static API key (`GPT_API_KEY` env var) for Custom GPT access
 - All API calls include `Authorization: Bearer <token>` header
+
+### ChatGPT Integration
+
+The API supports a Custom GPT in ChatGPT for natural language access to TimTracker data.
+
+**How it works:**
+1. A Custom GPT is configured in ChatGPT with the OpenAPI spec from `apps/api/gpt/openapi.yaml`
+2. The GPT uses a static bearer token (`GPT_API_KEY`) for authentication
+3. The middleware checks for this key before falling back to Clerk auth
+4. The GPT can query data, log meals, record interactions, and score daily nutrition
+
+**Key files:**
+- `apps/api/gpt/openapi.yaml` — OpenAPI 3.1.0 spec defining all available actions
+- `apps/api/gpt/chatgpt.PROMPT` — System prompt with usage instructions for the GPT
+- `apps/api/middleware.ts` — Checks `GPT_API_KEY` before Clerk auth
+- `apps/api/lib/auth.ts` — Unified auth helper returning `{ type: 'gpt' | 'clerk', userId }`
+
+**GPT endpoints:**
+- `GET /api/schema` — Discover tables, columns, and analytic endpoints
+- `POST /api/query` — Flexible query for any table
+- `POST /api/log/meal` — Log a meal
+- `POST /api/log/interaction` — Log social interactions
+- `POST /api/daily-meal-scores` — Upsert daily nutrition score
+- `GET /api/people` — List people for interaction logging
+- Plus all analytic endpoints (sleep, metrics, workouts, etc.)
+
+**Setup:**
+1. Generate a secure API key and add as `GPT_API_KEY` in Vercel
+2. Create a Custom GPT at chatgpt.com
+3. Paste `openapi.yaml` contents in Actions schema
+4. Configure authentication as "API Key" with Bearer scheme
+5. Paste `chatgpt.PROMPT` contents as the GPT's instructions
 
 ### Navigation
 
