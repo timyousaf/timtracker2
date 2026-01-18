@@ -90,26 +90,36 @@ export function CalendarHeatmap({
         },
       },
       calendar: {
-        top: 30,
-        left: 30,
-        right: 30,
-        cellSize: ['auto', 20],
-        range: [startDate, endDate], // Use ISO dates from points
+        orient: 'vertical', // Standard calendar: weeks as rows, weekdays as columns
+        top: 60,
+        left: 50,
+        right: 50,
+        bottom: 20,
+        cellSize: [80, 45], // [width, height] for each cell
+        range: [startDate, endDate],
         itemStyle: {
           borderWidth: 1,
-          borderColor: '#fff',
+          borderColor: '#e0e0e0',
         },
         dayLabel: {
-          firstDay: 0,
-          nameMap: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
-          fontSize: 10,
+          firstDay: 0, // Start week on Sunday
+          margin: 10,
+          nameMap: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+          fontSize: 11,
+          color: '#666',
         },
         monthLabel: {
-          show: true,
-          fontSize: 10,
+          show: false,
         },
         yearLabel: {
           show: false,
+        },
+        splitLine: {
+          show: true,
+          lineStyle: {
+            color: '#e0e0e0',
+            width: 1,
+          },
         },
       },
       series: [
@@ -117,6 +127,15 @@ export function CalendarHeatmap({
           type: 'heatmap',
           coordinateSystem: 'calendar',
           data: heatmapData,
+          label: {
+            show: true,
+            formatter: (params: any) => {
+              const date = new Date(params.data[0]);
+              return date.getDate().toString();
+            },
+            fontSize: 12,
+            color: '#333',
+          },
         },
       ],
     };
@@ -157,7 +176,7 @@ export function CalendarHeatmap({
         </TouchableOpacity>
       </View>
       
-      <EChart option={option} height={200} />
+      <EChart option={option} height={350} />
     </View>
   );
 }
