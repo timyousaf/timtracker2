@@ -10,21 +10,13 @@ import {
   RefreshControl,
   TouchableOpacity,
   Modal,
-  Platform,
 } from 'react-native';
 import {
-  HealthChart,
-  SleepChart,
-  WorkoutsChart,
-  StrengthChart,
-  MealScoreChart,
-  CalendarHeatmap,
-  ExerciseProgressChart,
   DateRange,
   DATE_RANGE_OPTIONS,
   DEFAULT_DATE_RANGE,
   formatDateRangeForApi,
-} from '@timtracker/ui';
+} from '@timtracker/ui/utils';
 import type {
   HealthChartDataPoint,
   SleepDataPoint,
@@ -33,7 +25,7 @@ import type {
   StrengthVolumeData,
   DailyMealScoreDataPoint,
   ExerciseProgressDataPoint,
-} from '@timtracker/ui';
+} from '@timtracker/ui/types';
 import {
   fetchMetrics,
   fetchSleep,
@@ -43,6 +35,17 @@ import {
   fetchMealScores,
   fetchExerciseProgress,
 } from '@/lib/api';
+
+// Import local ECharts-based components (cross-platform)
+import {
+  HealthChart,
+  SleepChart,
+  WorkoutsChart,
+  StrengthChart,
+  MealScoreChart,
+  ExerciseProgressChart,
+  CalendarHeatmap,
+} from '@/components/charts';
 
 // Exercise configurations - matching legacy TimTracker exactly
 const EXERCISES = [
