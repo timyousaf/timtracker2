@@ -55,6 +55,10 @@ export function CalendarHeatmap({
       return {};
     }
 
+    // Debug: log data points with non-null values
+    const nonNullPoints = data.points.filter(p => p.value !== null && p.value !== 0);
+    console.log(`[CalendarHeatmap ${title}] Points with data:`, nonNullPoints.length, nonNullPoints.slice(0, 5));
+
     // Transform data for ECharts calendar
     // For score-based coloring, we include the score as a third element
     const heatmapData = useScoreColors

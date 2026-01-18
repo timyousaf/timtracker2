@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
 
     if (chartType === 'mindful') {
       const result = await pool.query<{ date: string; value: number }>(
-        `SELECT date::text, value
+        `SELECT date::date::text as date, value
          FROM apple_health_metrics
          WHERE type = 'Mindful Minutes (min)'
            AND date >= $1 AND date <= $2`,
