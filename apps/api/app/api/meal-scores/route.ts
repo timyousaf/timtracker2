@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     let scoreParamIndex = 1;
     
     let scoreQuery = `
-      SELECT date::text, health_score, health_comment
+      SELECT date::date::text as date, health_score, health_comment
       FROM daily_meal_scores
       WHERE health_score IS NOT NULL
     `;
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
     let mealParamIndex = 1;
     
     let mealQuery = `
-      SELECT date::text, description
+      SELECT date::date::text as date, description
       FROM meal_logs
       WHERE 1=1
     `;

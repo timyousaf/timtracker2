@@ -173,7 +173,7 @@ export async function GET(request: NextRequest) {
         interaction_type: string;
         note: string | null;
       }>(
-        `SELECT i.date::text, p.name AS person_name, i.interaction_type, i.note
+        `SELECT i.date::date::text as date, p.name AS person_name, i.interaction_type, i.note
          FROM interactions i
          LEFT JOIN people p ON i.person_id = p.id
          WHERE i.date >= $1 AND i.date <= $2`,
@@ -202,7 +202,7 @@ export async function GET(request: NextRequest) {
         date: string;
         description: string;
       }>(
-        `SELECT date::text, description
+        `SELECT date::date::text as date, description
          FROM meal_logs
          WHERE date >= $1 AND date <= $2`,
         [startDateStr, endDateStr]
@@ -228,7 +228,7 @@ export async function GET(request: NextRequest) {
         date: string;
         health_score: number;
       }>(
-        `SELECT date::text, health_score
+        `SELECT date::date::text as date, health_score
          FROM daily_meal_scores
          WHERE date >= $1 AND date <= $2 AND health_score IS NOT NULL`,
         [startDateStr, endDateStr]

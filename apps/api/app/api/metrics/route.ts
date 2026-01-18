@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
     let paramIndex = 2;
     
     let query = `
-      SELECT date::text, value
+      SELECT date::date::text, value
       FROM apple_health_metrics
       WHERE type = $1
     `;
