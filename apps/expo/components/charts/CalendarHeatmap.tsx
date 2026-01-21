@@ -3,10 +3,12 @@
  * Shadcn-inspired styling
  */
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { EChart, echarts } from './EChart';
 import { ChartCard } from './ChartCard';
 import { colors, fontSizes, fonts, spacing, borderRadius } from '@/lib/theme';
+
+const screenWidth = Dimensions.get('window').width;
 import type { CalendarHeatmapData } from '@timtracker/ui/types';
 
 interface CalendarHeatmapProps {
@@ -176,10 +178,12 @@ export function CalendarHeatmap({
       calendar: {
         orient: 'vertical',
         top: 50,
-        left: 20,
-        right: 20,
+        left: 10,
+        right: 10,
         bottom: 20,
-        cellSize: [46, 46], // Larger cells to use more horizontal space
+        // Calculate cell size to fit 7 days within available width
+        // Available: screenWidth - container padding (32) - chart padding (16) - left/right (20) - day labels (~40)
+        cellSize: [Math.floor((screenWidth - 118) / 7), Math.floor((screenWidth - 118) / 7)],
         range: [startDate, endDate],
         itemStyle: {
           borderWidth: 1,
@@ -275,6 +279,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     padding: spacing[4],
     marginBottom: spacing[4],
+    overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',
