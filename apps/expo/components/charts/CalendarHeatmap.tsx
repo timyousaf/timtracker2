@@ -178,12 +178,11 @@ export function CalendarHeatmap({
       calendar: {
         orient: 'vertical',
         top: 50,
-        left: 10,
-        right: 10,
+        left: 'center',
         bottom: 20,
         // Calculate cell size to fit 7 days within available width
-        // Available: screenWidth - container padding (32) - chart padding (16) - left/right (20) - day labels (~40)
-        cellSize: [Math.floor((screenWidth - 118) / 7), Math.floor((screenWidth - 118) / 7)],
+        // Available: screenWidth - container padding (32) - chart padding (16) - day labels (~50)
+        cellSize: [Math.floor((screenWidth - 100) / 7), Math.floor((screenWidth - 100) / 7)],
         range: [startDate, endDate],
         itemStyle: {
           borderWidth: 1,
