@@ -169,13 +169,7 @@ eas credentials
 After initial setup, building and submitting is simple:
 
 ```bash
-cd apps/expo
-
-# Build for iOS (runs in EAS cloud)
-eas build --profile production --platform ios
-
-# Submit to TestFlight (uses API key, no login needed)
-eas submit --platform ios --latest
+cd apps/expo && eas build --profile production --platform ios --non-interactive --auto-submit
 ```
 
 ### Setting Up TestFlight (First Time)
@@ -283,11 +277,7 @@ Users get the update automatically the next time they open the app. No TestFligh
 For changes to native dependencies, app.json, or Expo SDK:
 
 ```bash
-# Build new version (auto-increments build number)
-eas build --profile production --platform ios
-
-# Submit to TestFlight
-eas submit --platform ios --latest
+cd apps/expo && eas build --profile production --platform ios --non-interactive --auto-submit
 ```
 
 Users open TestFlight and tap "Update" to get the new version.

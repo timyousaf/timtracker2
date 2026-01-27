@@ -47,8 +47,7 @@ EXPO_PUBLIC_API_URL=https://timtracker-api.vercel.app
 ### iOS (TestFlight)
 
 ```bash
-cd apps/expo
-eas build --platform ios --profile production --auto-submit
+cd apps/expo && eas build --profile production --platform ios --non-interactive --auto-submit
 ```
 
 ## Charts
