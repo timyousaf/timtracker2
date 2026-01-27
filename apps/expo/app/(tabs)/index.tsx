@@ -11,6 +11,8 @@ import {
   TouchableOpacity,
   Modal,
 } from 'react-native';
+import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
 import {
   DateRange,
   DATE_RANGE_OPTIONS,
@@ -18,6 +20,7 @@ import {
   formatDateRangeForApi,
 } from '@timtracker/ui/utils';
 import { colors, fontSizes, fonts, spacing, borderRadius, shadows } from '@/lib/theme';
+import { Sparkles } from 'lucide-react-native';
 import type {
   HealthChartDataPoint,
   SleepDataPoint,
@@ -60,11 +63,22 @@ const EXERCISES = [
   { name: 'Rear Delt Reverse Fly (Dumbbell)', displayName: 'Rear Delt Reverse Fly (Dumbbell)' },
 ];
 
+const TIMTRACKER_GPT_URL =
+  'https://chatgpt.com/g/g-68705007a1648191bf77dfc290a5664e-timtracker';
+
 export default function HomeScreen() {
   const { getToken } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const openTimTrackerGpt = useCallback(async () => {
+    try {
+      await WebBrowser.openBrowserAsync(TIMTRACKER_GPT_URL);
+    } catch {
+      Linking.openURL(TIMTRACKER_GPT_URL);
+    }
+  }, []);
 
   // Date range selector
   const [selectedRange, setSelectedRange] = useState<DateRange>(DEFAULT_DATE_RANGE);
@@ -239,14 +253,24 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container}>
       {/* Date Range Selector - Fixed Header */}
       <View style={styles.header}>
-          <TouchableOpacity
+        <TouchableOpacity
           style={styles.pickerButton}
           onPress={() => setPickerVisible(true)}
-          >
+        >
           <Text style={styles.pickerButtonText}>{selectedLabel}</Text>
           <Text style={styles.pickerChevron}>▼</Text>
-          </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.aiButton}
+          onPress={openTimTrackerGpt}
+          accessibilityRole="link"
+          accessibilityLabel="Open TimTracker GPT"
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Sparkles size={18} color={colors.foreground} strokeWidth={1.8} />
+        </TouchableOpacity>
+      </View>
 
       {/* Picker Modal */}
       <Modal
@@ -440,13 +464,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.background,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
+    gap: spacing[3],
   },
   pickerButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -465,6 +493,16 @@ const styles = StyleSheet.create({
   pickerChevron: {
     fontSize: fontSizes.xs,
     color: colors.foregroundMuted,
+  },
+  aiButton: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.borderInput,
+    backgroundColor: colors.background,
   },
   modalOverlay: {
     flex: 1,

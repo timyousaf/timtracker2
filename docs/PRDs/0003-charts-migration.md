@@ -43,7 +43,7 @@ The timtracker2 iOS and web apps currently only display raw health metrics in a 
 
 ## Charts Inventory & Layout
 
-The charts are organized exactly as in the legacy TimTracker webapp (`git/timtracker/webapp/src/ChartsPage.tsx`).
+The charts are organized exactly as in the legacy TimTracker webapp (`git/personal/timtracker/webapp/src/ChartsPage.tsx`).
 
 **Note:** The Interaction Calendar is on a separate Social page in the legacy app, not the Charts page.
 
@@ -612,8 +612,8 @@ Each chart must replicate the rich tooltip content from the legacy app. Below is
 
 ## References
 
-- Legacy implementation: `git/timtracker/webapp/src/components/charts/`
-- Legacy API: `git/timtracker/backend/flask_api/endpoints/`
+- Legacy implementation: `git/personal/timtracker/webapp/src/components/charts/`
+- Legacy API: `git/personal/timtracker/backend/flask_api/endpoints/`
 - shadcn charts docs: https://ui.shadcn.com/docs/components/chart
 - ECharts calendar heatmap: https://echarts.apache.org/examples/en/editor.html?c=calendar-heatmap
 - react-native-echarts: https://github.com/AnotiaWang/react-native-echarts (cross-platform ECharts)

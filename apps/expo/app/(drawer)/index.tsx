@@ -12,6 +12,8 @@ import {
   Modal,
 } from 'react-native';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
+import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
 import {
   DateRange,
   DATE_RANGE_OPTIONS,
@@ -19,6 +21,7 @@ import {
   formatDateRangeForApi,
 } from '@timtracker/ui/utils';
 import { colors, fontSizes, fonts, spacing, borderRadius, shadows } from '@/lib/theme';
+import { Sparkles } from 'lucide-react-native';
 import type {
   HealthChartDataPoint,
   SleepDataPoint,
@@ -58,6 +61,9 @@ const EXERCISES = [
   { name: 'Rear Delt Reverse Fly (Dumbbell)', displayName: 'Rear Delt Reverse Fly (Dumbbell)' },
 ];
 
+const TIMTRACKER_GPT_URL =
+  'https://chatgpt.com/g/g-68705007a1648191bf77dfc290a5664e-timtracker';
+
 export default function HomeScreen() {
   const { getToken } = useAuth();
   const navigation = useNavigation();
@@ -68,6 +74,14 @@ export default function HomeScreen() {
   const openDrawer = () => {
     navigation.dispatch(DrawerActions.openDrawer());
   };
+
+  const openTimTrackerGpt = useCallback(async () => {
+    try {
+      await WebBrowser.openBrowserAsync(TIMTRACKER_GPT_URL);
+    } catch {
+      Linking.openURL(TIMTRACKER_GPT_URL);
+    }
+  }, []);
 
   // Date range selector
   const [selectedRange, setSelectedRange] = useState<DateRange>(DEFAULT_DATE_RANGE);
@@ -253,6 +267,16 @@ export default function HomeScreen() {
         >
           <Text style={styles.pickerButtonText}>{selectedLabel}</Text>
           <Text style={styles.pickerChevron}>▼</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.aiButton}
+          onPress={openTimTrackerGpt}
+          accessibilityRole="link"
+          accessibilityLabel="Open TimTracker GPT"
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Sparkles size={18} color={colors.foreground} strokeWidth={1.8} />
         </TouchableOpacity>
       </View>
 
@@ -473,6 +497,16 @@ const styles = StyleSheet.create({
   pickerChevron: {
     fontSize: fontSizes.xs,
     color: colors.foregroundMuted,
+  },
+  aiButton: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.borderInput,
+    backgroundColor: colors.background,
   },
   modalOverlay: {
     flex: 1,
