@@ -11,6 +11,13 @@ import { colors, fontSizes, fonts, spacing, borderRadius } from '@/lib/theme';
 const screenWidth = Dimensions.get('window').width;
 import type { CalendarHeatmapData } from '@timtracker/ui/types';
 
+// Tighten side padding so the calendar uses more of the card width.
+const CALENDAR_CARD_PADDING_X = spacing[2]; // ~8px
+
+// Increase the ECharts calendar cell size so the 7-day grid fills more of the canvas width.
+// The prior sizing left too much side whitespace inside the canvas (see screenshot).
+const CALENDAR_CELL_SIZE = Math.floor((screenWidth - 48) / 7);
+
 interface CalendarHeatmapProps {
   title: string;
   chartType: string;
@@ -181,8 +188,8 @@ export function CalendarHeatmap({
         left: 'center',
         bottom: 20,
         // Calculate cell size to fit 7 days within available width
-        // Available: screenWidth - container padding (32) - chart padding (16) - day labels (~50)
-        cellSize: [Math.floor((screenWidth - 100) / 7), Math.floor((screenWidth - 100) / 7)],
+        // Fill more of the available width to reduce side whitespace inside the canvas.
+        cellSize: [CALENDAR_CELL_SIZE, CALENDAR_CELL_SIZE],
         range: [startDate, endDate],
         itemStyle: {
           borderWidth: 1,
@@ -276,7 +283,8 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: spacing[4],
+    paddingVertical: spacing[4],
+    paddingHorizontal: CALENDAR_CARD_PADDING_X,
     marginBottom: spacing[4],
     overflow: 'hidden',
   },
