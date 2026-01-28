@@ -144,7 +144,7 @@ export async function GET(request: NextRequest) {
       description: string;
     }>(
       `SELECT date::date::text as date, description
-       FROM meals
+       FROM meal_logs
        WHERE date >= $1 AND date <= $2
        ORDER BY date, created_at`,
       [startDateStr, endDateStr]
