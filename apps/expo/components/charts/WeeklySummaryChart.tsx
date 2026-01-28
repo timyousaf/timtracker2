@@ -113,12 +113,37 @@ export function WeeklySummaryChart({
     return {
       tooltip: {
         confine: true,
+        enterable: true, // Allow tapping on tooltip without triggering cell underneath
         backgroundColor: colors.card,
         borderColor: colors.border,
         borderWidth: 1,
         textStyle: {
           color: colors.foreground,
           fontSize: 12,
+        },
+        extraCssText: 'max-width: 220px; white-space: pre-wrap; word-wrap: break-word;',
+        position: function (point: number[], params: any, dom: any, rect: any, size: any) {
+          // Position tooltip to avoid overflow
+          const tooltipWidth = size.contentSize[0];
+          const tooltipHeight = size.contentSize[1];
+          const chartWidth = size.viewSize[0];
+          const chartHeight = size.viewSize[1];
+          let x = point[0];
+          let y = point[1];
+          
+          // If tooltip would overflow right, position to the left
+          if (x + tooltipWidth > chartWidth - 10) {
+            x = x - tooltipWidth - 10;
+          } else {
+            x = x + 10;
+          }
+          
+          // If tooltip would overflow bottom, position above
+          if (y + tooltipHeight > chartHeight - 10) {
+            y = Math.max(10, chartHeight - tooltipHeight - 10);
+          }
+          
+          return [x, y];
         },
         formatter: (params: any) => {
           // Handle both array format and object format (when using custom itemStyle)
@@ -159,9 +184,7 @@ export function WeeklySummaryChart({
               if (meta.meals?.length) {
                 lines.push('', 'Meals:');
                 meta.meals.slice(0, 3).forEach((m: string) => {
-                  // Truncate long descriptions
-                  const desc = m.length > 30 ? m.substring(0, 30) + '...' : m;
-                  lines.push(desc);
+                  lines.push(m);
                 });
                 if (meta.meals.length > 3) {
                   lines.push(`...and ${meta.meals.length - 3} more`);
