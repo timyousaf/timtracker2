@@ -2,10 +2,11 @@
  * Weekly Summary Chart
  * A 4x7 grid showing exercise, diet, sleep, and mindfulness for the current week
  */
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Pressable, Modal, Dimensions } from 'react-native';
 import { colors, fontSizes, fonts, spacing, borderRadius } from '@/lib/theme';
-import type { WeeklySummaryData } from '@timtracker/ui/types';
+import type { WeeklySummaryData, WeeklySummaryDay } from '@timtracker/ui/types';
+import { format, parseISO } from 'date-fns';
 
 const screenWidth = Dimensions.get('window').width;
 const CARD_PADDING_X = spacing[2]; // ~8px
@@ -35,6 +36,54 @@ interface WeeklySummaryChartProps {
   onNavigateBack?: () => void;
   onNavigateForward?: () => void;
   canNavigateForward?: boolean;
+}
+
+type RowType = 'exercise' | 'diet' | 'sleep' | 'mindful';
+
+interface TooltipInfo {
+  rowType: RowType;
+  day: WeeklySummaryDay;
+  x: number;
+  y: number;
+}
+
+/**
+ * Format tooltip content based on row type
+ */
+function formatTooltipContent(rowType: RowType, day: WeeklySummaryDay): string[] {
+  const dateStr = format(parseISO(day.date), 'MMM d, yyyy');
+  
+  switch (rowType) {
+    case 'exercise': {
+      if (day.exercise === null || day.exercise === 0) {
+        return [dateStr, 'No exercise'];
+      }
+      const mins = Math.round(day.exercise);
+      return [dateStr, `${mins} min`];
+    }
+    case 'diet': {
+      if (day.dietScore === null) {
+        return [dateStr, 'No diet data'];
+      }
+      return [dateStr, `Score: ${day.dietScore}/10`];
+    }
+    case 'sleep': {
+      if (day.sleepHours === null) {
+        return [dateStr, 'No sleep data'];
+      }
+      const totalMinutes = Math.round(day.sleepHours * 60);
+      const hrs = Math.floor(totalMinutes / 60);
+      const mins = totalMinutes % 60;
+      return [dateStr, `Sleep: ${hrs}h ${mins}m`];
+    }
+    case 'mindful': {
+      if (day.mindfulMinutes === null || day.mindfulMinutes === 0) {
+        return [dateStr, 'No mindfulness'];
+      }
+      const mins = Math.round(day.mindfulMinutes);
+      return [dateStr, `${mins} min`];
+    }
+  }
 }
 
 /**
@@ -106,6 +155,25 @@ export function WeeklySummaryChart({
   onNavigateForward,
   canNavigateForward = true,
 }: WeeklySummaryChartProps) {
+  const [tooltip, setTooltip] = useState<TooltipInfo | null>(null);
+
+  const handleCellPress = useCallback((
+    rowType: RowType, 
+    day: WeeklySummaryDay, 
+    event: { nativeEvent: { pageX: number; pageY: number } }
+  ) => {
+    setTooltip({
+      rowType,
+      day,
+      x: event.nativeEvent.pageX,
+      y: event.nativeEvent.pageY,
+    });
+  }, []);
+
+  const dismissTooltip = useCallback(() => {
+    setTooltip(null);
+  }, []);
+
   if (loading || !data) {
     return (
       <View style={styles.container}>
@@ -138,6 +206,19 @@ export function WeeklySummaryChart({
   }
 
   const { days, maxExercise, maxMindful } = data;
+
+  const renderCell = (
+    rowType: RowType,
+    day: WeeklySummaryDay,
+    idx: number,
+    getColor: () => string
+  ) => (
+    <Pressable
+      key={idx}
+      style={[styles.cell, { backgroundColor: getColor() }]}
+      onPress={(event) => handleCellPress(rowType, day, event)}
+    />
+  );
 
   return (
     <View style={styles.container}>
@@ -179,12 +260,9 @@ export function WeeklySummaryChart({
         <View style={styles.labelCell}>
           <Text style={styles.labelText}>{ROW_LABELS[0]}</Text>
         </View>
-        {days.map((day, idx) => (
-          <View 
-            key={idx} 
-            style={[styles.cell, { backgroundColor: getExerciseColor(day.exercise, maxExercise) }]}
-          />
-        ))}
+        {days.map((day, idx) => 
+          renderCell('exercise', day, idx, () => getExerciseColor(day.exercise, maxExercise))
+        )}
       </View>
 
       {/* Diet row */}
@@ -192,12 +270,9 @@ export function WeeklySummaryChart({
         <View style={styles.labelCell}>
           <Text style={styles.labelText}>{ROW_LABELS[1]}</Text>
         </View>
-        {days.map((day, idx) => (
-          <View 
-            key={idx} 
-            style={[styles.cell, { backgroundColor: getDietColor(day.dietScore) }]}
-          />
-        ))}
+        {days.map((day, idx) => 
+          renderCell('diet', day, idx, () => getDietColor(day.dietScore))
+        )}
       </View>
 
       {/* Sleep row */}
@@ -205,12 +280,9 @@ export function WeeklySummaryChart({
         <View style={styles.labelCell}>
           <Text style={styles.labelText}>{ROW_LABELS[2]}</Text>
         </View>
-        {days.map((day, idx) => (
-          <View 
-            key={idx} 
-            style={[styles.cell, { backgroundColor: getSleepColor(day.sleepHours) }]}
-          />
-        ))}
+        {days.map((day, idx) => 
+          renderCell('sleep', day, idx, () => getSleepColor(day.sleepHours))
+        )}
       </View>
 
       {/* Mindfulness row */}
@@ -218,13 +290,37 @@ export function WeeklySummaryChart({
         <View style={styles.labelCell}>
           <Text style={styles.labelText}>{ROW_LABELS[3]}</Text>
         </View>
-        {days.map((day, idx) => (
-          <View 
-            key={idx} 
-            style={[styles.cell, { backgroundColor: getMindfulColor(day.mindfulMinutes, maxMindful) }]}
-          />
-        ))}
+        {days.map((day, idx) => 
+          renderCell('mindful', day, idx, () => getMindfulColor(day.mindfulMinutes, maxMindful))
+        )}
       </View>
+
+      {/* Tooltip Modal */}
+      <Modal
+        visible={tooltip !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={dismissTooltip}
+      >
+        <Pressable style={styles.tooltipOverlay} onPress={dismissTooltip}>
+          {tooltip && (
+            <View 
+              style={[
+                styles.tooltipContainer,
+                {
+                  // Position tooltip near the tap, but keep it on screen
+                  top: Math.min(tooltip.y - 60, screenWidth * 1.5),
+                  left: Math.max(16, Math.min(tooltip.x - 60, screenWidth - 140)),
+                }
+              ]}
+            >
+              {formatTooltipContent(tooltip.rowType, tooltip.day).map((line, idx) => (
+                <Text key={idx} style={styles.tooltipText}>{line}</Text>
+              ))}
+            </View>
+          )}
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -318,5 +414,30 @@ const styles = StyleSheet.create({
   },
   loadingGrid: {
     opacity: 0.5,
+  },
+  tooltipOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
+  tooltipContainer: {
+    position: 'absolute',
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    minWidth: 120,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  tooltipText: {
+    fontSize: fontSizes.sm,
+    color: colors.foreground,
+    fontFamily: fonts.regular,
+    lineHeight: 20,
   },
 });
