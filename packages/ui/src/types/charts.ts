@@ -177,3 +177,32 @@ export interface MealScoreChartProps {
   loading?: boolean;
 }
 
+// ============================================
+// Weekly Summary
+// ============================================
+
+export interface WeeklySummaryDay {
+  date: string;
+  dayOfWeek: number; // 0 = Sunday, 6 = Saturday
+  exercise: number | null; // minutes
+  dietScore: number | null; // 0-10
+  sleepHours: number | null;
+  mindfulMinutes: number | null;
+}
+
+export interface WeeklySummaryData {
+  startDateStr: string;
+  endDateStr: string;
+  days: WeeklySummaryDay[];
+  maxExercise: number; // For gradient calculation
+  maxMindful: number;  // For gradient calculation
+}
+
+export interface WeeklySummaryChartProps {
+  data: WeeklySummaryData | null;
+  loading?: boolean;
+  onNavigateBack?: () => void;
+  onNavigateForward?: () => void;
+  canNavigateForward?: boolean;
+}
+

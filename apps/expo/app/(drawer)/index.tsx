@@ -29,6 +29,7 @@ import type {
   WeeklyWorkoutsData,
   StrengthVolumeData,
   ExerciseProgressDataPoint,
+  WeeklySummaryData,
 } from '@timtracker/ui/types';
 import {
   fetchMetrics,
@@ -37,6 +38,7 @@ import {
   fetchWeeklyWorkouts,
   fetchStrengthVolume,
   fetchExerciseProgress,
+  fetchWeeklySummary,
 } from '@/lib/api';
 
 // Import local ECharts-based components (cross-platform)
@@ -47,6 +49,7 @@ import {
   StrengthChart,
   ExerciseProgressChart,
   CalendarHeatmap,
+  WeeklySummaryChart,
 } from '@/components/charts';
 
 // Exercise configurations - matching legacy TimTracker exactly
@@ -87,6 +90,7 @@ export default function HomeScreen() {
   const [selectedRange, setSelectedRange] = useState<DateRange>(DEFAULT_DATE_RANGE);
 
   // ===== CORE METRICS DATA =====
+  const [weeklySummary, setWeeklySummary] = useState<WeeklySummaryData | null>(null);
   const [sleepData, setSleepData] = useState<SleepDataPoint[]>([]);
   const [mindfulHeatmap, setMindfulHeatmap] = useState<CalendarHeatmapData | null>(null);
   const [exerciseHeatmap, setExerciseHeatmap] = useState<CalendarHeatmapData | null>(null);
@@ -107,6 +111,7 @@ export default function HomeScreen() {
   const [exerciseProgressData, setExerciseProgressData] = useState<Record<string, ExerciseProgressDataPoint[]>>({});
   
   // Heatmap offsets for navigation
+  const [summaryOffset, setSummaryOffset] = useState(0);
   const [mindfulOffset, setMindfulOffset] = useState(0);
   const [exerciseOffset, setExerciseOffset] = useState(0);
   const [mealOffset, setMealOffset] = useState(0);
@@ -132,6 +137,7 @@ export default function HomeScreen() {
       // ===== SECTION 1: CORE METRICS =====
       setLoadingCore(true);
       Promise.all([
+        fetchWeeklySummary(tokenGetter, { offset: summaryOffset }).catch(() => null),
         fetchSleep(tokenGetter, dateRange).catch(() => ({ data: [] })),
         fetchCalendarHeatmap(tokenGetter, { type: 'mindful', offset: mindfulOffset }).catch(() => null),
         fetchCalendarHeatmap(tokenGetter, { type: 'exercise', offset: exerciseOffset }).catch(() => null),
@@ -139,7 +145,8 @@ export default function HomeScreen() {
         fetchCalendarHeatmap(tokenGetter, { type: 'meal', offset: mealOffset }).catch(() => null),
         fetchMetrics(tokenGetter, { type: 'Waist Circumference (in)', ...dateRange }).catch(() => ({ data: [] })),
         fetchMetrics(tokenGetter, { type: 'Weight/Body Mass (lb)', ...dateRange }).catch(() => ({ data: [] })),
-      ]).then(([sleep, mindful, exercise, strength, meal, waist, weight]) => {
+      ]).then(([summary, sleep, mindful, exercise, strength, meal, waist, weight]) => {
+        setWeeklySummary(summary);
         setSleepData(sleep.data);
         setMindfulHeatmap(mindful);
         setExerciseHeatmap(exercise);
@@ -190,6 +197,13 @@ export default function HomeScreen() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reload heatmaps when offsets change (but not on initial load)
+  useEffect(() => {
+    if (!initialLoadComplete) return;
+    fetchWeeklySummary(getToken, { offset: summaryOffset })
+      .then(setWeeklySummary)
+      .catch(console.error);
+  }, [summaryOffset]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (!initialLoadComplete) return;
     fetchCalendarHeatmap(getToken, { type: 'mindful', offset: mindfulOffset })
@@ -325,6 +339,15 @@ export default function HomeScreen() {
         }
       >
         {/* ===== SECTION 1: CORE METRICS ===== */}
+        {/* 0. Weekly Summary */}
+        <WeeklySummaryChart
+          data={weeklySummary}
+          loading={loadingCore}
+          onNavigateBack={() => setSummaryOffset(prev => prev + 1)}
+          onNavigateForward={() => setSummaryOffset(prev => Math.max(0, prev - 1))}
+          canNavigateForward={summaryOffset > 0}
+        />
+
         {/* 1. Exercise Calendar */}
         <CalendarHeatmap
           title="Exercise Calendar"
