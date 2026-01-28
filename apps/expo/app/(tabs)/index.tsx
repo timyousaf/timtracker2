@@ -73,10 +73,20 @@ export default function HomeScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const openTimTrackerGpt = useCallback(async () => {
+    // Important: `expo-web-browser` uses an in-app Safari view on iOS, which
+    // does NOT hand off Universal Links to other apps. Use `Linking.openURL`
+    // first so the ChatGPT iOS app can open the custom GPT (if installed).
+    try {
+      await Linking.openURL(TIMTRACKER_GPT_URL);
+      return;
+    } catch {
+      // Fall through to in-app browser.
+    }
+
     try {
       await WebBrowser.openBrowserAsync(TIMTRACKER_GPT_URL);
     } catch {
-      Linking.openURL(TIMTRACKER_GPT_URL);
+      // If even the in-app browser fails, there's nothing else to do.
     }
   }, []);
 

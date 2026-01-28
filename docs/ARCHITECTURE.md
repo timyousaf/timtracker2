@@ -135,7 +135,7 @@ Push to main
 ### EAS Build (iOS)
 
 ```bash
-eas build --platform ios --profile production --auto-submit
+cd apps/expo && eas build --profile production --platform ios --non-interactive --auto-submit
 ```
 
 Credentials managed by EAS. Builds submitted directly to TestFlight.

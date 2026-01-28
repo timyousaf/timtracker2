@@ -199,16 +199,7 @@ The Expo project rewrites `/api/*` requests to the API project.
 ### Build Commands
 
 ```bash
-cd apps/expo
-
-# Initialize EAS (first time)
-eas init
-
-# Build for TestFlight
-eas build --profile production --platform ios
-
-# Submit to App Store Connect
-eas submit --platform ios
+cd apps/expo && eas build --profile production --platform ios --non-interactive --auto-submit
 ```
 
 EAS automatically manages Apple certificates, provisioning profiles, and App Store Connect setup.
