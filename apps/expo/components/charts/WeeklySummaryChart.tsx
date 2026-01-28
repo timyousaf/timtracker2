@@ -3,7 +3,7 @@
  * A 4x7 grid showing exercise, diet, sleep, and mindfulness for the current week
  */
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Pressable, Modal, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform } from 'react-native';
 import { colors, fontSizes, fonts, spacing, borderRadius } from '@/lib/theme';
 import type { WeeklySummaryData, WeeklySummaryDay } from '@timtracker/ui/types';
 import { format, parseISO } from 'date-fns';
@@ -43,8 +43,8 @@ type RowType = 'exercise' | 'diet' | 'sleep' | 'mindful';
 interface TooltipInfo {
   rowType: RowType;
   day: WeeklySummaryDay;
-  x: number;
-  y: number;
+  rowIndex: number;
+  colIndex: number;
 }
 
 /**
@@ -159,14 +159,16 @@ export function WeeklySummaryChart({
 
   const handleCellPress = useCallback((
     rowType: RowType, 
-    day: WeeklySummaryDay, 
-    event: { nativeEvent: { pageX: number; pageY: number } }
+    day: WeeklySummaryDay,
+    rowIndex: number,
+    colIndex: number
   ) => {
-    setTooltip({
-      rowType,
-      day,
-      x: event.nativeEvent.pageX,
-      y: event.nativeEvent.pageY,
+    // Toggle tooltip - if same cell is pressed, dismiss; otherwise show new
+    setTooltip(prev => {
+      if (prev && prev.rowIndex === rowIndex && prev.colIndex === colIndex) {
+        return null;
+      }
+      return { rowType, day, rowIndex, colIndex };
     });
   }, []);
 
@@ -210,15 +212,26 @@ export function WeeklySummaryChart({
   const renderCell = (
     rowType: RowType,
     day: WeeklySummaryDay,
-    idx: number,
+    colIndex: number,
+    rowIndex: number,
     getColor: () => string
-  ) => (
-    <Pressable
-      key={idx}
-      style={[styles.cell, { backgroundColor: getColor() }]}
-      onPress={(event) => handleCellPress(rowType, day, event)}
-    />
-  );
+  ) => {
+    const isActive = tooltip?.rowIndex === rowIndex && tooltip?.colIndex === colIndex;
+    return (
+      <TouchableOpacity
+        key={colIndex}
+        style={[
+          styles.cell, 
+          { backgroundColor: getColor() },
+          isActive && styles.cellActive
+        ]}
+        onPress={() => handleCellPress(rowType, day, rowIndex, colIndex)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.cellInner} />
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -261,7 +274,7 @@ export function WeeklySummaryChart({
           <Text style={styles.labelText}>{ROW_LABELS[0]}</Text>
         </View>
         {days.map((day, idx) => 
-          renderCell('exercise', day, idx, () => getExerciseColor(day.exercise, maxExercise))
+          renderCell('exercise', day, idx, 0, () => getExerciseColor(day.exercise, maxExercise))
         )}
       </View>
 
@@ -271,7 +284,7 @@ export function WeeklySummaryChart({
           <Text style={styles.labelText}>{ROW_LABELS[1]}</Text>
         </View>
         {days.map((day, idx) => 
-          renderCell('diet', day, idx, () => getDietColor(day.dietScore))
+          renderCell('diet', day, idx, 1, () => getDietColor(day.dietScore))
         )}
       </View>
 
@@ -281,7 +294,7 @@ export function WeeklySummaryChart({
           <Text style={styles.labelText}>{ROW_LABELS[2]}</Text>
         </View>
         {days.map((day, idx) => 
-          renderCell('sleep', day, idx, () => getSleepColor(day.sleepHours))
+          renderCell('sleep', day, idx, 2, () => getSleepColor(day.sleepHours))
         )}
       </View>
 
@@ -291,36 +304,25 @@ export function WeeklySummaryChart({
           <Text style={styles.labelText}>{ROW_LABELS[3]}</Text>
         </View>
         {days.map((day, idx) => 
-          renderCell('mindful', day, idx, () => getMindfulColor(day.mindfulMinutes, maxMindful))
+          renderCell('mindful', day, idx, 3, () => getMindfulColor(day.mindfulMinutes, maxMindful))
         )}
       </View>
 
-      {/* Tooltip Modal */}
-      <Modal
-        visible={tooltip !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={dismissTooltip}
-      >
-        <Pressable style={styles.tooltipOverlay} onPress={dismissTooltip}>
-          {tooltip && (
-            <View 
-              style={[
-                styles.tooltipContainer,
-                {
-                  // Position tooltip near the tap, but keep it on screen
-                  top: Math.min(tooltip.y - 60, screenWidth * 1.5),
-                  left: Math.max(16, Math.min(tooltip.x - 60, screenWidth - 140)),
-                }
-              ]}
-            >
-              {formatTooltipContent(tooltip.rowType, tooltip.day).map((line, idx) => (
-                <Text key={idx} style={styles.tooltipText}>{line}</Text>
-              ))}
-            </View>
-          )}
-        </Pressable>
-      </Modal>
+      {/* Tooltip - positioned below the grid */}
+      {tooltip && (
+        <TouchableOpacity 
+          style={styles.tooltipWrapper} 
+          onPress={dismissTooltip}
+          activeOpacity={1}
+        >
+          <View style={styles.tooltipContainer}>
+            {formatTooltipContent(tooltip.rowType, tooltip.day).map((line, idx) => (
+              <Text key={idx} style={styles.tooltipText}>{line}</Text>
+            ))}
+            <Text style={styles.tooltipDismiss}>Tap to dismiss</Text>
+          </View>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -411,26 +413,38 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
     borderWidth: 1,
     borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    // Ensure touch target is visible on web
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' as any } : {}),
+  },
+  cellActive: {
+    borderColor: colors.foreground,
+    borderWidth: 2,
+  },
+  cellInner: {
+    flex: 1,
+    width: '100%',
   },
   loadingGrid: {
     opacity: 0.5,
   },
-  tooltipOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  tooltipWrapper: {
+    marginTop: spacing[3],
+    alignItems: 'center',
   },
   tooltipContainer: {
-    position: 'absolute',
     backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.md,
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[2],
-    minWidth: 120,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    minWidth: 140,
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 5,
   },
@@ -438,6 +452,13 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
     color: colors.foreground,
     fontFamily: fonts.regular,
-    lineHeight: 20,
+    lineHeight: 22,
+    textAlign: 'center',
+  },
+  tooltipDismiss: {
+    fontSize: fontSizes.xs,
+    color: colors.foregroundMuted,
+    fontFamily: fonts.regular,
+    marginTop: spacing[2],
   },
 });
