@@ -157,7 +157,7 @@ export function CalendarHeatmap({
           
           if (point?.workouts?.length) {
             lines.push('', 'Workouts:');
-            point.workouts.slice(0, 3).forEach(w => {
+            point.workouts.forEach(w => {
               const text = `${w.type}: ${Math.round(w.durationMinutes)}m`;
               lines.push(...wrapText(text, 28));
             });
@@ -165,7 +165,7 @@ export function CalendarHeatmap({
           
           if (point?.interactions?.length) {
             lines.push('', 'Interactions:');
-            point.interactions.slice(0, 3).forEach(i => {
+            point.interactions.forEach(i => {
               const text = `${i.personName} (${i.interactionType})`;
               lines.push(...wrapText(text, 28));
             });
@@ -173,7 +173,7 @@ export function CalendarHeatmap({
           
           if (point?.meals?.length) {
             lines.push('', 'Meals:');
-            point.meals.slice(0, 3).forEach(m => {
+            point.meals.forEach(m => {
               lines.push(...wrapText(m.description, 28));
             });
           }

@@ -165,12 +165,9 @@ export function WeeklySummaryChart({
               // Add workout details if available
               if (meta.workouts?.length) {
                 lines.push('', 'Workouts:');
-                meta.workouts.slice(0, 3).forEach((w: any) => {
+                meta.workouts.forEach((w: any) => {
                   lines.push(`${w.type}: ${w.durationMinutes}m`);
                 });
-                if (meta.workouts.length > 3) {
-                  lines.push(`...and ${meta.workouts.length - 3} more`);
-                }
               }
               return lines.join('\n');
             }
@@ -183,12 +180,9 @@ export function WeeklySummaryChart({
               // Add meal descriptions if available
               if (meta.meals?.length) {
                 lines.push('', 'Meals:');
-                meta.meals.slice(0, 3).forEach((m: string) => {
+                meta.meals.forEach((m: string) => {
                   lines.push(m);
                 });
-                if (meta.meals.length > 3) {
-                  lines.push(`...and ${meta.meals.length - 3} more`);
-                }
               }
               return lines.join('\n');
             }
