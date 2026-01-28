@@ -179,6 +179,29 @@ export interface MealScoresResponse {
 }
 
 // ============================================
+// Weekly Summary
+// ============================================
+
+export interface WeeklySummaryDay {
+  date: string;
+  dayOfWeek: number; // 0 = Sunday, 6 = Saturday
+  exercise: number | null; // minutes
+  dietScore: number | null; // 0-10
+  sleepHours: number | null;
+  mindfulMinutes: number | null;
+}
+
+export interface WeeklySummaryResponse {
+  startDateStr: string;
+  endDateStr: string;
+  days: WeeklySummaryDay[];
+  maxExercise: number; // For gradient calculation
+  maxMindful: number;  // For gradient calculation
+}
+
+export type WeeklySummaryApiResponse = WeeklySummaryResponse;
+
+// ============================================
 // Type Aliases for backward compatibility
 // ============================================
 

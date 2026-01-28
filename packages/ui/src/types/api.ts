@@ -10,6 +10,7 @@ import type {
   StrengthVolumeData,
   ExerciseProgressDataPoint,
   DailyMealScoreDataPoint,
+  WeeklySummaryData,
 } from './charts';
 
 // ============================================
@@ -108,3 +109,13 @@ export interface MealScoresApiParams {
 export interface MealScoresApiResponse {
   data: DailyMealScoreDataPoint[];
 }
+
+// ============================================
+// Weekly Summary API
+// ============================================
+
+export interface WeeklySummaryApiParams {
+  offset?: number;
+}
+
+export interface WeeklySummaryApiResponse extends WeeklySummaryData {}

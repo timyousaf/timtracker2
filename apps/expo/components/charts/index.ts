@@ -9,3 +9,4 @@ export { WorkoutsChart } from './WorkoutsChart';
 export { StrengthChart } from './StrengthChart';
 export { ExerciseProgressChart } from './ExerciseProgressChart';
 export { CalendarHeatmap } from './CalendarHeatmap';
+export { WeeklySummaryChart } from './WeeklySummaryChart';

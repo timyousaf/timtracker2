@@ -7,6 +7,7 @@ import type {
   StrengthVolumeApiResponse,
   ExerciseProgressApiResponse,
   MealScoresApiResponse,
+  WeeklySummaryApiResponse,
 } from '@timtracker/ui';
 
 /**
@@ -176,4 +177,18 @@ export async function fetchMealScores(
   
   const query = searchParams.toString();
   return apiFetch<MealScoresApiResponse>(`/api/meal-scores${query ? `?${query}` : ''}`, getToken);
+}
+
+/**
+ * Fetch weekly summary (exercise, diet, sleep, mindfulness for one week)
+ */
+export async function fetchWeeklySummary(
+  getToken: () => Promise<string | null>,
+  params?: { offset?: number }
+): Promise<WeeklySummaryApiResponse> {
+  const searchParams = new URLSearchParams();
+  if (params?.offset !== undefined) searchParams.set('offset', params.offset.toString());
+  
+  const query = searchParams.toString();
+  return apiFetch<WeeklySummaryApiResponse>(`/api/weekly-summary${query ? `?${query}` : ''}`, getToken);
 }
