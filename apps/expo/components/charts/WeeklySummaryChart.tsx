@@ -83,6 +83,7 @@ export function WeeklySummaryChart({
         date: day.date,
         value: day.exercise,
         maxValue: maxExercise,
+        workouts: day.workouts,
       }]);
 
       // Diet (row 2)
@@ -90,6 +91,7 @@ export function WeeklySummaryChart({
         type: 'diet',
         date: day.date,
         value: day.dietScore,
+        meals: day.meals,
       }]);
 
       // Sleep (row 1)
@@ -133,13 +135,39 @@ export function WeeklySummaryChart({
                 return `${dateStr}\nNo exercise`;
               }
               const mins = Math.round(meta.value);
-              return `${dateStr}\n${mins} min`;
+              let lines = [dateStr, `${mins} min`];
+              
+              // Add workout details if available
+              if (meta.workouts?.length) {
+                lines.push('', 'Workouts:');
+                meta.workouts.slice(0, 3).forEach((w: any) => {
+                  lines.push(`${w.type}: ${w.durationMinutes}m`);
+                });
+                if (meta.workouts.length > 3) {
+                  lines.push(`...and ${meta.workouts.length - 3} more`);
+                }
+              }
+              return lines.join('\n');
             }
             case 'diet': {
               if (meta.value === null) {
                 return `${dateStr}\nNo diet data`;
               }
-              return `${dateStr}\nScore: ${meta.value}/10`;
+              let lines = [dateStr, `Score: ${meta.value}/10`];
+              
+              // Add meal descriptions if available
+              if (meta.meals?.length) {
+                lines.push('', 'Meals:');
+                meta.meals.slice(0, 3).forEach((m: string) => {
+                  // Truncate long descriptions
+                  const desc = m.length > 30 ? m.substring(0, 30) + '...' : m;
+                  lines.push(desc);
+                });
+                if (meta.meals.length > 3) {
+                  lines.push(`...and ${meta.meals.length - 3} more`);
+                }
+              }
+              return lines.join('\n');
             }
             case 'sleep': {
               if (meta.value === null) {

@@ -77,7 +77,9 @@ export async function GET(request: NextRequest) {
 
     // Initialize maps for each metric type
     const exerciseByDate = new Map<string, number>();
+    const workoutsByDate = new Map<string, Array<{ type: string; durationMinutes: number }>>();
     const dietScoreByDate = new Map<string, number>();
+    const mealsByDate = new Map<string, string[]>();
     const sleepByDate = new Map<string, number>();
     const mindfulByDate = new Map<string, number>();
 
@@ -85,15 +87,17 @@ export async function GET(request: NextRequest) {
     let maxExercise = 0;
     let maxMindful = 0;
 
-    // 1. Fetch exercise data (workout durations, excluding walks)
+    // 1. Fetch exercise data (workout durations and types, excluding walks)
     const exerciseResult = await pool.query<{
       start_time: Date;
       duration_seconds: number;
+      type: string;
     }>(
-      `SELECT start_time, duration_seconds
+      `SELECT start_time, duration_seconds, type
        FROM apple_health_workouts
        WHERE start_time >= $1 AND start_time < $2::date + interval '1 day'
-         AND type NOT IN ('Walk', 'Outdoor Walk')`,
+         AND type NOT IN ('Walk', 'Outdoor Walk')
+       ORDER BY start_time`,
       [startDateStr, endDateStr]
     );
 
@@ -112,6 +116,11 @@ export async function GET(request: NextRequest) {
       const newValue = existing + durationMinutes;
       exerciseByDate.set(dateKey, newValue);
       maxExercise = Math.max(maxExercise, newValue);
+
+      // Track workout details
+      const workouts = workoutsByDate.get(dateKey) || [];
+      workouts.push({ type: row.type, durationMinutes: Math.round(durationMinutes) });
+      workoutsByDate.set(dateKey, workouts);
     }
 
     // 2. Fetch diet scores
@@ -127,6 +136,26 @@ export async function GET(request: NextRequest) {
 
     for (const row of dietResult.rows) {
       dietScoreByDate.set(row.date, row.health_score);
+    }
+
+    // 2b. Fetch meal descriptions
+    const mealsResult = await pool.query<{
+      date: string;
+      description: string;
+    }>(
+      `SELECT date::date::text as date, description
+       FROM meals
+       WHERE date >= $1 AND date <= $2
+       ORDER BY date, created_at`,
+      [startDateStr, endDateStr]
+    );
+
+    for (const row of mealsResult.rows) {
+      const meals = mealsByDate.get(row.date) || [];
+      if (row.description) {
+        meals.push(row.description);
+      }
+      mealsByDate.set(row.date, meals);
     }
 
     // 3. Fetch sleep data - sum qty for actual sleep stages only
@@ -188,6 +217,8 @@ export async function GET(request: NextRequest) {
         dietScore: dietScoreByDate.get(dateStr) ?? null,
         sleepHours: sleepByDate.get(dateStr) ?? null,
         mindfulMinutes: mindfulByDate.get(dateStr) ?? null,
+        workouts: workoutsByDate.get(dateStr),
+        meals: mealsByDate.get(dateStr),
       });
     }
 
