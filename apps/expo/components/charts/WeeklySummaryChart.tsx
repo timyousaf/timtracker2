@@ -119,7 +119,12 @@ export function WeeklySummaryChart({
           fontSize: 12,
         },
         formatter: (params: any) => {
-          const meta = params.data[3];
+          // Handle both array format and object format (when using custom itemStyle)
+          const dataArray = Array.isArray(params.data) ? params.data : params.data?.value;
+          if (!dataArray || !dataArray[3]) {
+            return '';
+          }
+          const meta = dataArray[3];
           const dateStr = format(parseISO(meta.date), 'MMM d, yyyy');
           
           switch (meta.type) {
