@@ -282,8 +282,12 @@ export function WeeklySummaryChart({
           data: coloredData,
         },
       ],
-      // Remove default visualMap since we're using custom colors
-      visualMap: undefined,
+      // Keep visualMap but hide it - ECharts requires it for heatmap
+      visualMap: {
+        show: false,
+        min: 0,
+        max: 10,
+      },
     };
   }, [option, data]);
 
