@@ -59,7 +59,7 @@ export function HealthChart({
         borderWidth: 1,
         textStyle: {
           color: colors.foreground,
-          fontSize: 12,
+          fontSize: 9,
         },
         formatter: (params: any) => {
           const point = Array.isArray(params) ? params[0] : params;

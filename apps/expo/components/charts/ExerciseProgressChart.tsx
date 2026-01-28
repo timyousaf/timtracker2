@@ -41,7 +41,7 @@ export function ExerciseProgressChart({
         borderWidth: 1,
         textStyle: {
           color: colors.foreground,
-          fontSize: 12,
+          fontSize: 9,
         },
         extraCssText: 'max-width: 220px; white-space: pre-wrap;',
         formatter: (params: any) => {

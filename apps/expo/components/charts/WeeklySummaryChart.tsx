@@ -24,7 +24,7 @@ const SCORE_COLORS = {
   poor: colors.chart.red500,
   fair: colors.chart.yellow500,
   good: colors.chart.green500,
-  none: colors.backgroundSubtle,
+  none: colors.background, // white for empty cells
 };
 
 interface WeeklySummaryChartProps {
@@ -119,7 +119,7 @@ export function WeeklySummaryChart({
         borderWidth: 1,
         textStyle: {
           color: colors.foreground,
-          fontSize: 12,
+          fontSize: 9,
         },
         extraCssText: 'max-width: 220px; white-space: pre-wrap; word-wrap: break-word;',
         position: function (point: number[], params: any, dom: any, rect: any, size: any) {
@@ -253,7 +253,7 @@ export function WeeklySummaryChart({
           itemStyle: {
             borderColor: colors.border,
             borderWidth: 1,
-            borderRadius: 4,
+            borderRadius: 0, // square corners
           },
           emphasis: {
             itemStyle: {
@@ -269,7 +269,7 @@ export function WeeklySummaryChart({
         min: 0,
         max: 10,
         inRange: {
-          color: [colors.backgroundSubtle, colors.chart.green500],
+          color: [colors.background, colors.chart.green500],
         },
       },
     };
@@ -293,7 +293,7 @@ export function WeeklySummaryChart({
         case 'exercise': {
           if (meta.value !== null && meta.value > 0) {
             const intensity = Math.min(1, meta.value / maxExercise);
-            cellColor = interpolateColor(colors.backgroundSubtle, EXERCISE_COLOR, intensity);
+            cellColor = interpolateColor(colors.background, EXERCISE_COLOR, intensity);
           }
           break;
         }
@@ -316,7 +316,7 @@ export function WeeklySummaryChart({
         case 'mindful': {
           if (meta.value !== null && meta.value > 0) {
             const intensity = Math.min(1, meta.value / maxMindful);
-            cellColor = interpolateColor(colors.backgroundSubtle, MINDFUL_COLOR, intensity);
+            cellColor = interpolateColor(colors.background, MINDFUL_COLOR, intensity);
           }
           break;
         }
