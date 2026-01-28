@@ -181,6 +181,11 @@ export interface MealScoreChartProps {
 // Weekly Summary
 // ============================================
 
+export interface WeeklySummaryWorkout {
+  type: string;
+  durationMinutes: number;
+}
+
 export interface WeeklySummaryDay {
   date: string;
   dayOfWeek: number; // 0 = Sunday, 6 = Saturday
@@ -188,6 +193,8 @@ export interface WeeklySummaryDay {
   dietScore: number | null; // 0-10
   sleepHours: number | null;
   mindfulMinutes: number | null;
+  workouts?: WeeklySummaryWorkout[]; // workout details for tooltips
+  meals?: string[]; // meal descriptions for tooltips
 }
 
 export interface WeeklySummaryData {
