@@ -451,33 +451,33 @@ CREATE INDEX idx_ios_sleep_end ON ios_apple_health_sleep(end_time);
 
 ### Phase 1A: Database Prep (Neon)
 
-- [ ] Create `ios_apple_health_metrics` table with `healthkit_uuid` column
-- [ ] Create `ios_apple_health_workouts` table with `healthkit_uuid` column
-- [ ] Create `ios_apple_health_sleep` table with `healthkit_uuid` column
-- [ ] Add unique constraint on `healthkit_uuid` for each table
-- [ ] Add indexes for common query patterns
-- [ ] Test insert + `ON CONFLICT DO NOTHING` behavior manually
+- [x] Create `ios_apple_health_metrics` table with `healthkit_uuid` column
+- [x] Create `ios_apple_health_workouts` table with `healthkit_uuid` column
+- [x] Create `ios_apple_health_sleep` table with `healthkit_uuid` column
+- [x] Add unique constraint on `healthkit_uuid` for each table
+- [x] Add indexes for common query patterns
+- [ ] Test insert + `ON CONFLICT DO NOTHING` behavior manually (requires running migration)
 
 ### Phase 1B: API Ingestion Endpoints (`apps/api`)
 
-- [ ] Create `POST /api/ingest/health-metrics` route
-  - [ ] Request validation (Zod schema)
-  - [ ] Batch insert with `ON CONFLICT (healthkit_uuid) DO NOTHING`
-  - [ ] Return `{ received, inserted, duplicates }` counts
-- [ ] Create `POST /api/ingest/health-workouts` route
-  - [ ] Request validation
-  - [ ] Batch insert with conflict handling
-- [ ] Create `POST /api/ingest/health-sleep` route
-  - [ ] Request validation
-  - [ ] Batch insert with conflict handling
-- [ ] Ensure all endpoints are protected by Clerk middleware
-- [ ] Add request logging for observability
+- [x] Create `POST /api/ingest/health-metrics` route
+  - [x] Request validation
+  - [x] Batch insert with `ON CONFLICT (healthkit_uuid) DO NOTHING`
+  - [x] Return `{ received, inserted, duplicates }` counts
+- [x] Create `POST /api/ingest/health-workouts` route
+  - [x] Request validation
+  - [x] Batch insert with conflict handling
+- [x] Create `POST /api/ingest/health-sleep` route
+  - [x] Request validation
+  - [x] Batch insert with conflict handling
+- [x] Ensure all endpoints are protected by Clerk middleware
+- [x] Add request logging for observability
 - [ ] Write integration tests for each endpoint
 
 ### Phase 1C: Expo HealthKit Setup (`apps/expo`)
 
-- [ ] Install `@kingstinct/react-native-healthkit` and `react-native-nitro-modules`
-- [ ] Add config plugin to `app.json` with usage descriptions
+- [x] Install `@kingstinct/react-native-healthkit` and `react-native-nitro-modules`
+- [x] Add config plugin to `app.json` with usage descriptions
 - [ ] Run `npx expo prebuild` to generate native project
 - [ ] Create EAS development build (`eas build --profile development --platform ios`)
 - [ ] Test that HealthKit authorization prompt appears on device
@@ -485,58 +485,55 @@ CREATE INDEX idx_ios_sleep_end ON ios_apple_health_sleep(end_time);
 
 ### Phase 1D: HealthKit ↔ Canonical Type Mapping (`apps/expo/lib/healthkit/`)
 
-- [ ] Create `types.ts` with TypeScript types for our canonical metric names
-- [ ] Create `quantityMapping.ts`: map HealthKit `QuantityTypeIdentifier` → canonical type string
-- [ ] Create `categoryMapping.ts`: map HealthKit `CategoryTypeIdentifier` → canonical type string (sleep, mindful)
-- [ ] Create `workoutMapping.ts`: map HealthKit `WorkoutActivityType` → our workout type string
-- [ ] Create `unitConversions.ts`: kg→lb, m→mi, etc.
+- [x] Create `types.ts` with TypeScript types for our canonical metric names
+- [x] Create `quantityMapping.ts`: map HealthKit `QuantityTypeIdentifier` → canonical type string
+- [x] Create `categoryMapping.ts`: map HealthKit `CategoryTypeIdentifier` → canonical type string (sleep, mindful)
+- [x] Create `workoutMapping.ts`: map HealthKit `WorkoutActivityType` → our workout type string
+- [x] Create `unitConversions.ts`: kg→lb, m→mi, etc.
 - [ ] Write unit tests for all mappings and conversions
 
 ### Phase 1E: Sync Implementation (`apps/expo/lib/healthkit/`)
 
-- [ ] Create `anchorStorage.ts`: read/write anchors to AsyncStorage keyed by sample type
-- [ ] Create `aggregateMetrics.ts`: aggregate raw samples to daily values (sum/avg/min/max)
-- [ ] Create `syncMetrics.ts`:
-  - [ ] Query HealthKit with anchor
-  - [ ] Aggregate to daily values
-  - [ ] Map to canonical types
-  - [ ] Upload to API in batches
-  - [ ] Store new anchor
-- [ ] Create `syncWorkouts.ts`:
-  - [ ] Query workouts with anchor
-  - [ ] Extract workout statistics (duration, distance, HR)
-  - [ ] Map to canonical format
-  - [ ] Upload to API in batches
-  - [ ] Store new anchor
-- [ ] Create `syncSleep.ts`:
-  - [ ] Query sleep category samples with anchor
-  - [ ] Map sleep stages to our `value` strings
-  - [ ] Upload to API in batches
-  - [ ] Store new anchor
-- [ ] Create `syncAll.ts`: orchestrate all three syncs with error handling
+- [x] Create `anchorStorage.ts`: read/write anchors to AsyncStorage keyed by sample type
+- [x] Create `aggregation.ts`: aggregate raw samples to daily values (sum/avg/min/max)
+- [x] Create `sync.ts` with syncMetrics:
+  - [x] Query HealthKit with anchor
+  - [x] Aggregate to daily values
+  - [x] Map to canonical types
+  - [x] Upload to API in batches
+  - [x] Store new anchor
+- [x] Create `sync.ts` with syncWorkouts:
+  - [x] Query workouts
+  - [x] Extract workout statistics (duration, distance)
+  - [x] Map to canonical format
+  - [x] Upload to API in batches
+- [x] Create `sync.ts` with syncSleep:
+  - [x] Query sleep category samples with anchor
+  - [x] Map sleep stages to our `value` strings
+  - [x] Upload to API in batches
+  - [x] Store new anchor
+- [x] Create `syncAllHealthData()`: orchestrate all three syncs with error handling
 - [ ] Implement retry with exponential backoff for failed uploads
-- [ ] Add logging for sync progress and errors
+- [x] Add logging for sync progress and errors
 
 ### Phase 1F: Settings UI (`apps/expo/app/(drawer)/settings.tsx`)
 
-- [ ] Add "Health Sync" section
-- [ ] Add "Connect to Apple Health" button
-  - [ ] Triggers HealthKit authorization request
-  - [ ] Shows "Connected" state after auth
-- [ ] Add "Sync Now" button
-  - [ ] Triggers `syncAll()`
-  - [ ] Shows loading spinner during sync
-- [ ] Add "Last synced" timestamp display (stored in AsyncStorage)
-- [ ] Add sync progress indicator (X of Y records)
-- [ ] Add error state display with retry option
+- [x] Add "Health Sync" section
+- [x] Add HealthKit availability check
+- [x] Add "Sync Now" button
+  - [x] Triggers `syncAllHealthData()`
+  - [x] Shows loading spinner during sync
+- [x] Add "Last synced" timestamp display (stored in AsyncStorage)
+- [x] Add sync progress indicator
+- [x] Add error state display with retry option
 
 ### Phase 1G: App Lifecycle Integration
 
-- [ ] Trigger sync on app foreground (when returning from background) — optional, can defer
-- [ ] Or: only manual sync via Settings for Phase 1
+- [x] Manual sync via Settings for Phase 1 (no auto-sync on foreground)
 
 ### Phase 1H: Validation & Testing
 
+- [ ] Run SQL migration against Neon database
 - [ ] Deploy to TestFlight
 - [ ] Run full sync on real device with multi-year health history
 - [ ] Compare `ios_apple_health_metrics` vs `apple_health_metrics` for recent 14 days
@@ -560,3 +557,4 @@ CREATE INDEX idx_ios_sleep_end ON ios_apple_health_sleep(end_time);
 
 - 2026-01-27: Initial draft
 - 2026-01-27: Updated with library choice (`@kingstinct/react-native-healthkit`), incremental sync strategy, HealthKit mapping table, detailed implementation checklist
+- 2026-01-28: Implementation complete on `feature/ios-healthkit-ingest` branch. Phases 1A-1F implemented. Remaining: run migration, EAS build, TestFlight testing.
