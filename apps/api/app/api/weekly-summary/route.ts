@@ -129,60 +129,28 @@ export async function GET(request: NextRequest) {
       dietScoreByDate.set(row.date, row.health_score);
     }
 
-    // 3. Fetch sleep data - calculate from start_time/end_time like the /api/sleep endpoint
+    // 3. Fetch sleep data - sum qty for actual sleep stages only
+    // We filter to only Core, Deep, REM sleep stages (actual sleep time)
+    // Excluding: 'In Bed', 'InBed' (total time in bed which contains the other stages)
+    //            'Awake' (time awake during the night)
+    // The qty column already contains duration in hours for each stage
     const sleepResult = await pool.query<{
       date: string;
-      start_time: Date;
-      end_time: Date;
+      total_hours: number;
     }>(
       `SELECT 
          DATE(end_time AT TIME ZONE 'America/New_York')::text as date,
-         start_time,
-         end_time
+         SUM(qty) as total_hours
        FROM apple_health_sleep
-       WHERE DATE(end_time AT TIME ZONE 'America/New_York') >= $1
-         AND DATE(end_time AT TIME ZONE 'America/New_York') <= $2`,
+       WHERE value IN ('Core', 'Deep', 'REM')
+         AND DATE(end_time AT TIME ZONE 'America/New_York') >= $1
+         AND DATE(end_time AT TIME ZONE 'America/New_York') <= $2
+       GROUP BY DATE(end_time AT TIME ZONE 'America/New_York')`,
       [startDateStr, endDateStr]
     );
 
-    // Group sleep segments by date and merge overlapping ones (same logic as /api/sleep)
-    const sleepSegmentsByDate = new Map<string, Array<{ start: Date; end: Date }>>();
     for (const row of sleepResult.rows) {
-      const existing = sleepSegmentsByDate.get(row.date) || [];
-      existing.push({
-        start: new Date(row.start_time),
-        end: new Date(row.end_time),
-      });
-      sleepSegmentsByDate.set(row.date, existing);
-    }
-
-    // Calculate total sleep per day, merging overlapping segments
-    for (const [date, segments] of sleepSegmentsByDate.entries()) {
-      // Sort segments by start time
-      segments.sort((a, b) => a.start.getTime() - b.start.getTime());
-
-      // Merge overlapping segments
-      const merged: Array<{ start: Date; end: Date }> = [];
-      for (const segment of segments) {
-        if (merged.length === 0) {
-          merged.push({ ...segment });
-        } else {
-          const last = merged[merged.length - 1];
-          if (segment.start <= last.end) {
-            // Overlapping - extend the end if needed
-            last.end = new Date(Math.max(last.end.getTime(), segment.end.getTime()));
-          } else {
-            merged.push({ ...segment });
-          }
-        }
-      }
-
-      // Calculate total hours
-      const totalMinutes = merged.reduce((sum, seg) => {
-        return sum + (seg.end.getTime() - seg.start.getTime()) / 60000;
-      }, 0);
-      const hours = totalMinutes / 60;
-      sleepByDate.set(date, hours);
+      sleepByDate.set(row.date, row.total_hours);
     }
 
     // 4. Fetch mindful minutes

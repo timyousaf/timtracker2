@@ -41,9 +41,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(cached);
     }
 
-    // Build query - get raw sleep segments
+    // Build query - sum qty for actual sleep stages only
     // Note: apple_health_sleep has no 'date' column, so we derive it from end_time
     // (sleep is typically assigned to the day it ends on)
+    // 
+    // We filter to only Core, Deep, REM sleep stages (actual sleep time)
+    // Excluding: 'In Bed', 'InBed' (total time in bed which contains the other stages)
+    //            'Awake' (time awake during the night)
+    // The qty column already contains duration in hours for each stage
     const pool = getPool();
     const params: string[] = [];
     let paramIndex = 1;
@@ -51,11 +56,9 @@ export async function GET(request: NextRequest) {
     let query = `
       SELECT 
         DATE(end_time AT TIME ZONE 'America/New_York')::text as date,
-        start_time,
-        end_time,
-        value as sleep_type
+        SUM(qty) as total_hours
       FROM apple_health_sleep
-      WHERE 1=1
+      WHERE value IN ('Core', 'Deep', 'REM')
     `;
 
     if (start) {
@@ -70,14 +73,12 @@ export async function GET(request: NextRequest) {
       paramIndex++;
     }
 
-    query += ' ORDER BY end_time';
+    query += ' GROUP BY DATE(end_time AT TIME ZONE \'America/New_York\') ORDER BY date';
 
     // Execute query
     const result = await pool.query<{
       date: string;
-      start_time: string;
-      end_time: string;
-      sleep_type: string;
+      total_hours: number;
     }>(query, params);
 
     if (result.rows.length === 0) {
@@ -86,50 +87,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(response);
     }
 
-    // Process sleep segments into daily totals
-    // Group by date and calculate total sleep, handling overlaps
-    const sleepByDate = new Map<string, { segments: Array<{ start: Date; end: Date }> }>();
-
-    for (const row of result.rows) {
-      const existing = sleepByDate.get(row.date) || { segments: [] };
-      existing.segments.push({
-        start: new Date(row.start_time),
-        end: new Date(row.end_time),
-      });
-      sleepByDate.set(row.date, existing);
-    }
-
-    // Calculate total sleep per day, merging overlapping segments
-    const dailyData: Array<{ date: string; hours: number }> = [];
-
-    for (const [date, { segments }] of sleepByDate.entries()) {
-      // Sort segments by start time
-      segments.sort((a, b) => a.start.getTime() - b.start.getTime());
-
-      // Merge overlapping segments
-      const merged: Array<{ start: Date; end: Date }> = [];
-      for (const segment of segments) {
-        if (merged.length === 0) {
-          merged.push({ ...segment });
-        } else {
-          const last = merged[merged.length - 1];
-          if (segment.start <= last.end) {
-            // Overlapping - extend the end if needed
-            last.end = new Date(Math.max(last.end.getTime(), segment.end.getTime()));
-          } else {
-            merged.push({ ...segment });
-          }
-        }
-      }
-
-      // Calculate total hours
-      const totalMinutes = merged.reduce((sum, seg) => {
-        return sum + (seg.end.getTime() - seg.start.getTime()) / 60000;
-      }, 0);
-      const hours = totalMinutes / 60;
-
-      dailyData.push({ date, hours });
-    }
+    // Build daily data directly from the aggregated query results
+    const dailyData: Array<{ date: string; hours: number }> = result.rows.map(row => ({
+      date: row.date,
+      hours: row.total_hours,
+    }));
 
     // Sort by date
     dailyData.sort((a, b) => a.date.localeCompare(b.date));
