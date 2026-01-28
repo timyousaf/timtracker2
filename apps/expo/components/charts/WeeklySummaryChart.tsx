@@ -1,32 +1,29 @@
 /**
- * Weekly Summary Chart
- * A 4x7 grid showing exercise, diet, sleep, and mindfulness for the current week
+ * Weekly Summary Chart using ECharts
+ * A 4x7 heatmap grid showing exercise, diet, sleep, and mindfulness for the current week
  */
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { EChart, echarts } from './EChart';
 import { colors, fontSizes, fonts, spacing, borderRadius } from '@/lib/theme';
-import type { WeeklySummaryData, WeeklySummaryDay } from '@timtracker/ui/types';
+import type { WeeklySummaryData } from '@timtracker/ui/types';
 import { format, parseISO } from 'date-fns';
 
 const screenWidth = Dimensions.get('window').width;
-const CARD_PADDING_X = spacing[2]; // ~8px
-const LABEL_WIDTH = 60; // Width for row labels
-const CELL_GAP = 2;
-const AVAILABLE_WIDTH = screenWidth - (CARD_PADDING_X * 2) - spacing[4] - LABEL_WIDTH;
-const CELL_SIZE = Math.floor((AVAILABLE_WIDTH - (CELL_GAP * 6)) / 7);
+const CARD_PADDING_X = spacing[2];
 
-const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-const ROW_LABELS = ['Exercise', 'Diet', 'Sleep', 'Mindful'];
+// Row labels (bottom to top in ECharts grid)
+const ROW_LABELS = ['Mindful', 'Sleep', 'Diet', 'Exercise'];
+const ROW_TYPES = ['mindful', 'sleep', 'diet', 'exercise'] as const;
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-// Color schemes matching existing charts
+// Color schemes
 const EXERCISE_COLOR = colors.chart.emerald500;
 const MINDFUL_COLOR = colors.chart.purple500;
-
-// Score-based colors for diet and sleep (0-10 scale or hours)
 const SCORE_COLORS = {
-  poor: colors.chart.red500,    // diet: 0-3, sleep: < 6h
-  fair: colors.chart.yellow500, // diet: 4-6, sleep: 6-7.5h
-  good: colors.chart.green500,  // diet: 7-10, sleep: >= 7.5h
+  poor: colors.chart.red500,
+  fair: colors.chart.yellow500,
+  good: colors.chart.green500,
   none: colors.backgroundSubtle,
 };
 
@@ -36,94 +33,6 @@ interface WeeklySummaryChartProps {
   onNavigateBack?: () => void;
   onNavigateForward?: () => void;
   canNavigateForward?: boolean;
-}
-
-type RowType = 'exercise' | 'diet' | 'sleep' | 'mindful';
-
-interface TooltipInfo {
-  rowType: RowType;
-  day: WeeklySummaryDay;
-  rowIndex: number;
-  colIndex: number;
-}
-
-/**
- * Format tooltip content based on row type
- */
-function formatTooltipContent(rowType: RowType, day: WeeklySummaryDay): string[] {
-  const dateStr = format(parseISO(day.date), 'MMM d, yyyy');
-  
-  switch (rowType) {
-    case 'exercise': {
-      if (day.exercise === null || day.exercise === 0) {
-        return [dateStr, 'No exercise'];
-      }
-      const mins = Math.round(day.exercise);
-      return [dateStr, `${mins} min`];
-    }
-    case 'diet': {
-      if (day.dietScore === null) {
-        return [dateStr, 'No diet data'];
-      }
-      return [dateStr, `Score: ${day.dietScore}/10`];
-    }
-    case 'sleep': {
-      if (day.sleepHours === null) {
-        return [dateStr, 'No sleep data'];
-      }
-      const totalMinutes = Math.round(day.sleepHours * 60);
-      const hrs = Math.floor(totalMinutes / 60);
-      const mins = totalMinutes % 60;
-      return [dateStr, `Sleep: ${hrs}h ${mins}m`];
-    }
-    case 'mindful': {
-      if (day.mindfulMinutes === null || day.mindfulMinutes === 0) {
-        return [dateStr, 'No mindfulness'];
-      }
-      const mins = Math.round(day.mindfulMinutes);
-      return [dateStr, `${mins} min`];
-    }
-  }
-}
-
-/**
- * Get color for exercise based on minutes (gradient)
- */
-function getExerciseColor(minutes: number | null, maxMinutes: number): string {
-  if (minutes === null || minutes === 0) return SCORE_COLORS.none;
-  // Calculate opacity/intensity based on value
-  const intensity = Math.min(1, minutes / maxMinutes);
-  // Interpolate between background and exercise color
-  return interpolateColor(colors.backgroundSubtle, EXERCISE_COLOR, intensity);
-}
-
-/**
- * Get color for mindfulness based on minutes (gradient)
- */
-function getMindfulColor(minutes: number | null, maxMinutes: number): string {
-  if (minutes === null || minutes === 0) return SCORE_COLORS.none;
-  const intensity = Math.min(1, minutes / maxMinutes);
-  return interpolateColor(colors.backgroundSubtle, MINDFUL_COLOR, intensity);
-}
-
-/**
- * Get color for diet score (red/yellow/green thresholds)
- */
-function getDietColor(score: number | null): string {
-  if (score === null) return SCORE_COLORS.none;
-  if (score <= 3) return SCORE_COLORS.poor;
-  if (score <= 6) return SCORE_COLORS.fair;
-  return SCORE_COLORS.good;
-}
-
-/**
- * Get color for sleep hours (red/yellow/green thresholds)
- */
-function getSleepColor(hours: number | null): string {
-  if (hours === null) return SCORE_COLORS.none;
-  if (hours < 6) return SCORE_COLORS.poor;
-  if (hours < 7.5) return SCORE_COLORS.fair;
-  return SCORE_COLORS.good;
 }
 
 /**
@@ -155,28 +64,230 @@ export function WeeklySummaryChart({
   onNavigateForward,
   canNavigateForward = true,
 }: WeeklySummaryChartProps) {
-  const [tooltip, setTooltip] = useState<TooltipInfo | null>(null);
+  const option = useMemo((): echarts.EChartsCoreOption => {
+    if (!data || !data.days || data.days.length === 0) {
+      return {};
+    }
 
-  const handleCellPress = useCallback((
-    rowType: RowType, 
-    day: WeeklySummaryDay,
-    rowIndex: number,
-    colIndex: number
-  ) => {
-    // Toggle tooltip - if same cell is pressed, dismiss; otherwise show new
-    setTooltip(prev => {
-      if (prev && prev.rowIndex === rowIndex && prev.colIndex === colIndex) {
-        return null;
-      }
-      return { rowType, day, rowIndex, colIndex };
+    const { days, maxExercise, maxMindful } = data;
+
+    // Build heatmap data: [colIndex, rowIndex, value, metadata]
+    // Rows: 0=Mindful, 1=Sleep, 2=Diet, 3=Exercise (bottom to top)
+    // Cols: 0=Sun through 6=Sat
+    const heatmapData: Array<[number, number, number, object]> = [];
+
+    days.forEach((day, colIndex) => {
+      // Exercise (row 3)
+      heatmapData.push([colIndex, 3, day.exercise ?? 0, {
+        type: 'exercise',
+        date: day.date,
+        value: day.exercise,
+        maxValue: maxExercise,
+      }]);
+
+      // Diet (row 2)
+      heatmapData.push([colIndex, 2, day.dietScore ?? 0, {
+        type: 'diet',
+        date: day.date,
+        value: day.dietScore,
+      }]);
+
+      // Sleep (row 1)
+      heatmapData.push([colIndex, 1, day.sleepHours ?? 0, {
+        type: 'sleep',
+        date: day.date,
+        value: day.sleepHours,
+      }]);
+
+      // Mindful (row 0)
+      heatmapData.push([colIndex, 0, day.mindfulMinutes ?? 0, {
+        type: 'mindful',
+        date: day.date,
+        value: day.mindfulMinutes,
+        maxValue: maxMindful,
+      }]);
     });
-  }, []);
 
-  const dismissTooltip = useCallback(() => {
-    setTooltip(null);
-  }, []);
+    return {
+      tooltip: {
+        confine: true,
+        backgroundColor: colors.card,
+        borderColor: colors.border,
+        borderWidth: 1,
+        textStyle: {
+          color: colors.foreground,
+          fontSize: 12,
+        },
+        formatter: (params: any) => {
+          const meta = params.data[3];
+          const dateStr = format(parseISO(meta.date), 'MMM d, yyyy');
+          
+          switch (meta.type) {
+            case 'exercise': {
+              if (meta.value === null || meta.value === 0) {
+                return `${dateStr}\nNo exercise`;
+              }
+              const mins = Math.round(meta.value);
+              return `${dateStr}\n${mins} min`;
+            }
+            case 'diet': {
+              if (meta.value === null) {
+                return `${dateStr}\nNo diet data`;
+              }
+              return `${dateStr}\nScore: ${meta.value}/10`;
+            }
+            case 'sleep': {
+              if (meta.value === null) {
+                return `${dateStr}\nNo sleep data`;
+              }
+              const totalMinutes = Math.round(meta.value * 60);
+              const hrs = Math.floor(totalMinutes / 60);
+              const mins = totalMinutes % 60;
+              return `${dateStr}\nSleep: ${hrs}h ${mins}m`;
+            }
+            case 'mindful': {
+              if (meta.value === null || meta.value === 0) {
+                return `${dateStr}\nNo mindfulness`;
+              }
+              const mins = Math.round(meta.value);
+              return `${dateStr}\n${mins} min`;
+            }
+            default:
+              return dateStr;
+          }
+        },
+      },
+      grid: {
+        left: 60,
+        right: 10,
+        top: 30,
+        bottom: 10,
+        containLabel: false,
+      },
+      xAxis: {
+        type: 'category',
+        data: DAY_LABELS,
+        position: 'top',
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: {
+          fontSize: 11,
+          color: colors.foregroundMuted,
+        },
+        splitLine: { show: false },
+      },
+      yAxis: {
+        type: 'category',
+        data: ROW_LABELS,
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: {
+          fontSize: 11,
+          color: colors.foregroundMuted,
+        },
+        splitLine: { show: false },
+      },
+      series: [
+        {
+          type: 'heatmap',
+          data: heatmapData,
+          label: {
+            show: false,
+          },
+          itemStyle: {
+            borderColor: colors.border,
+            borderWidth: 1,
+            borderRadius: 4,
+          },
+          emphasis: {
+            itemStyle: {
+              borderColor: colors.foreground,
+              borderWidth: 2,
+            },
+          },
+        },
+      ],
+      visualMap: {
+        show: false,
+        // We'll handle colors in itemStyle directly
+        min: 0,
+        max: 10,
+        inRange: {
+          color: [colors.backgroundSubtle, colors.chart.green500],
+        },
+      },
+    };
+  }, [data]);
 
-  if (loading || !data) {
+  // Custom color function for each cell
+  const optionWithColors = useMemo((): echarts.EChartsCoreOption => {
+    if (!option.series || !data) return option;
+
+    const { maxExercise, maxMindful } = data;
+
+    // Override series with custom colors per item
+    const seriesData = (option.series as any)[0]?.data;
+    if (!seriesData) return option;
+
+    const coloredData = seriesData.map((item: any) => {
+      const meta = item[3];
+      let cellColor = SCORE_COLORS.none;
+
+      switch (meta.type) {
+        case 'exercise': {
+          if (meta.value !== null && meta.value > 0) {
+            const intensity = Math.min(1, meta.value / maxExercise);
+            cellColor = interpolateColor(colors.backgroundSubtle, EXERCISE_COLOR, intensity);
+          }
+          break;
+        }
+        case 'diet': {
+          if (meta.value !== null) {
+            if (meta.value <= 3) cellColor = SCORE_COLORS.poor;
+            else if (meta.value <= 6) cellColor = SCORE_COLORS.fair;
+            else cellColor = SCORE_COLORS.good;
+          }
+          break;
+        }
+        case 'sleep': {
+          if (meta.value !== null) {
+            if (meta.value < 6) cellColor = SCORE_COLORS.poor;
+            else if (meta.value < 7.5) cellColor = SCORE_COLORS.fair;
+            else cellColor = SCORE_COLORS.good;
+          }
+          break;
+        }
+        case 'mindful': {
+          if (meta.value !== null && meta.value > 0) {
+            const intensity = Math.min(1, meta.value / maxMindful);
+            cellColor = interpolateColor(colors.backgroundSubtle, MINDFUL_COLOR, intensity);
+          }
+          break;
+        }
+      }
+
+      return {
+        value: [item[0], item[1], item[2], item[3]],
+        itemStyle: {
+          color: cellColor,
+        },
+      };
+    });
+
+    return {
+      ...option,
+      series: [
+        {
+          ...(option.series as any)[0],
+          data: coloredData,
+        },
+      ],
+      // Remove default visualMap since we're using custom colors
+      visualMap: undefined,
+    };
+  }, [option, data]);
+
+  if (!data || !data.days || data.days.length === 0) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -191,47 +302,12 @@ export function WeeklySummaryChart({
             <Text style={[styles.navButtonText, styles.navButtonTextDisabled]}>→</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.loadingGrid}>
-          {[...Array(4)].map((_, row) => (
-            <View key={row} style={styles.row}>
-              <View style={styles.labelCell}>
-                <Text style={styles.labelText}>{ROW_LABELS[row]}</Text>
-              </View>
-              {[...Array(7)].map((_, col) => (
-                <View key={col} style={[styles.cell, { backgroundColor: SCORE_COLORS.none }]} />
-              ))}
-            </View>
-          ))}
+        <View style={styles.noData}>
+          <Text style={styles.noDataText}>No data available</Text>
         </View>
       </View>
     );
   }
-
-  const { days, maxExercise, maxMindful } = data;
-
-  const renderCell = (
-    rowType: RowType,
-    day: WeeklySummaryDay,
-    colIndex: number,
-    rowIndex: number,
-    getColor: () => string
-  ) => {
-    const isActive = tooltip?.rowIndex === rowIndex && tooltip?.colIndex === colIndex;
-    return (
-      <TouchableOpacity
-        key={colIndex}
-        style={[
-          styles.cell, 
-          { backgroundColor: getColor() },
-          isActive && styles.cellActive
-        ]}
-        onPress={() => handleCellPress(rowType, day, rowIndex, colIndex)}
-        activeOpacity={0.7}
-      >
-        <View style={styles.cellInner} />
-      </TouchableOpacity>
-    );
-  };
 
   return (
     <View style={styles.container}>
@@ -257,72 +333,8 @@ export function WeeklySummaryChart({
           </Text>
         </TouchableOpacity>
       </View>
-
-      {/* Day labels header */}
-      <View style={styles.dayLabelsRow}>
-        <View style={styles.labelCell} />
-        {DAY_LABELS.map((label, idx) => (
-          <View key={idx} style={styles.dayLabelCell}>
-            <Text style={styles.dayLabelText}>{label}</Text>
-          </View>
-        ))}
-      </View>
-
-      {/* Exercise row */}
-      <View style={styles.row}>
-        <View style={styles.labelCell}>
-          <Text style={styles.labelText}>{ROW_LABELS[0]}</Text>
-        </View>
-        {days.map((day, idx) => 
-          renderCell('exercise', day, idx, 0, () => getExerciseColor(day.exercise, maxExercise))
-        )}
-      </View>
-
-      {/* Diet row */}
-      <View style={styles.row}>
-        <View style={styles.labelCell}>
-          <Text style={styles.labelText}>{ROW_LABELS[1]}</Text>
-        </View>
-        {days.map((day, idx) => 
-          renderCell('diet', day, idx, 1, () => getDietColor(day.dietScore))
-        )}
-      </View>
-
-      {/* Sleep row */}
-      <View style={styles.row}>
-        <View style={styles.labelCell}>
-          <Text style={styles.labelText}>{ROW_LABELS[2]}</Text>
-        </View>
-        {days.map((day, idx) => 
-          renderCell('sleep', day, idx, 2, () => getSleepColor(day.sleepHours))
-        )}
-      </View>
-
-      {/* Mindfulness row */}
-      <View style={styles.row}>
-        <View style={styles.labelCell}>
-          <Text style={styles.labelText}>{ROW_LABELS[3]}</Text>
-        </View>
-        {days.map((day, idx) => 
-          renderCell('mindful', day, idx, 3, () => getMindfulColor(day.mindfulMinutes, maxMindful))
-        )}
-      </View>
-
-      {/* Tooltip - positioned below the grid */}
-      {tooltip && (
-        <TouchableOpacity 
-          style={styles.tooltipWrapper} 
-          onPress={dismissTooltip}
-          activeOpacity={1}
-        >
-          <View style={styles.tooltipContainer}>
-            {formatTooltipContent(tooltip.rowType, tooltip.day).map((line, idx) => (
-              <Text key={idx} style={styles.tooltipText}>{line}</Text>
-            ))}
-            <Text style={styles.tooltipDismiss}>Tap to dismiss</Text>
-          </View>
-        </TouchableOpacity>
-      )}
+      
+      <EChart option={optionWithColors} height={180} />
     </View>
   );
 }
@@ -342,7 +354,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing[3],
+    marginBottom: spacing[2],
   },
   titleContainer: {
     alignItems: 'center',
@@ -376,89 +388,13 @@ const styles = StyleSheet.create({
   navButtonTextDisabled: {
     color: colors.foregroundSubtle,
   },
-  dayLabelsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing[1],
-  },
-  dayLabelCell: {
-    width: CELL_SIZE,
-    marginHorizontal: CELL_GAP / 2,
-    alignItems: 'center',
-  },
-  dayLabelText: {
-    fontSize: fontSizes.xs,
-    color: colors.foregroundMuted,
-    fontFamily: fonts.regular,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: CELL_GAP / 2,
-  },
-  labelCell: {
-    width: LABEL_WIDTH,
-    paddingRight: spacing[2],
-  },
-  labelText: {
-    fontSize: fontSizes.xs,
-    color: colors.foregroundMuted,
-    fontFamily: fonts.regular,
-    textAlign: 'right',
-  },
-  cell: {
-    width: CELL_SIZE,
-    height: CELL_SIZE,
-    marginHorizontal: CELL_GAP / 2,
-    borderRadius: borderRadius.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
+  noData: {
+    height: 150,
     justifyContent: 'center',
     alignItems: 'center',
-    // Ensure touch target is visible on web
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' as any } : {}),
   },
-  cellActive: {
-    borderColor: colors.foreground,
-    borderWidth: 2,
-  },
-  cellInner: {
-    flex: 1,
-    width: '100%',
-  },
-  loadingGrid: {
-    opacity: 0.5,
-  },
-  tooltipWrapper: {
-    marginTop: spacing[3],
-    alignItems: 'center',
-  },
-  tooltipContainer: {
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3],
-    minWidth: 140,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  tooltipText: {
-    fontSize: fontSizes.sm,
-    color: colors.foreground,
-    fontFamily: fonts.regular,
-    lineHeight: 22,
-    textAlign: 'center',
-  },
-  tooltipDismiss: {
-    fontSize: fontSizes.xs,
+  noDataText: {
     color: colors.foregroundMuted,
-    fontFamily: fonts.regular,
-    marginTop: spacing[2],
+    fontSize: fontSizes.sm,
   },
 });
