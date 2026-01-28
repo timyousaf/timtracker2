@@ -131,7 +131,7 @@ export function CalendarHeatmap({
           color: colors.foreground,
           fontSize: 9,
         },
-        extraCssText: 'max-width: 220px; white-space: pre-wrap; word-wrap: break-word;',
+        extraCssText: 'max-width: 400px; white-space: pre-wrap; word-wrap: break-word;',
         position: function (point: number[], params: any, dom: any, rect: any, size: any) {
           // Position tooltip to the left of the point if near right edge
           const tooltipWidth = size.contentSize[0];
