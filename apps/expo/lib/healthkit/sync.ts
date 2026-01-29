@@ -72,17 +72,30 @@ export async function checkHealthKitAvailable(): Promise<boolean> {
  */
 export async function requestHealthKitPermissions(): Promise<boolean> {
   try {
-    const quantityTypes = getQuantityTypeIdentifiers();
-    const categoryTypes = CATEGORY_TYPE_IDENTIFIERS;
+    // Build the list of HealthKit type identifiers to request
+    // The library uses HKQuantityTypeIdentifier and HKCategoryTypeIdentifier prefixes
+    const quantityTypes = getQuantityTypeIdentifiers().map(
+      (type) => `HKQuantityTypeIdentifier${type.charAt(0).toUpperCase()}${type.slice(1)}`
+    );
     
-    // Cast to any to handle library type mismatches
+    const categoryTypes = CATEGORY_TYPE_IDENTIFIERS.map(
+      (type) => `HKCategoryTypeIdentifier${type.charAt(0).toUpperCase()}${type.slice(1)}`
+    );
+    
+    // For workouts, use HKWorkoutTypeIdentifier
+    const allTypes = [...quantityTypes, ...categoryTypes, 'HKWorkoutTypeIdentifier'];
+    
+    console.log('Requesting HealthKit permissions for types:', allTypes);
+    
+    // Cast to any to handle library type variations
     await requestAuthorization({
-      toRead: [...quantityTypes, ...categoryTypes, 'workoutType'] as any,
+      toRead: allTypes as any,
     });
     
     return true;
   } catch (error) {
     console.error('Error requesting HealthKit permissions:', error);
+    console.error('Error details:', JSON.stringify(error, null, 2));
     return false;
   }
 }
