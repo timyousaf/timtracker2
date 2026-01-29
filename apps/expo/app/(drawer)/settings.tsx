@@ -13,6 +13,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { colors, fontSizes, fonts, spacing, borderRadius } from '@/lib/theme';
+import { logger } from '@/lib/logger';
 
 // Only import HealthKit on iOS
 let healthKit: typeof import('@/lib/healthkit') | null = null;
@@ -58,6 +59,7 @@ export default function SettingsScreen() {
   const handleSync = useCallback(async () => {
     if (!healthKit || isSyncing) return;
 
+    logger.info('Settings', 'User initiated Health Sync');
     setIsSyncing(true);
     setSyncResult(null);
     setSyncProgress('Starting sync...');
@@ -80,6 +82,11 @@ export default function SettingsScreen() {
           result.sleep.duplicates +
           result.workouts.duplicates;
 
+        logger.info('Settings', 'Health Sync completed successfully', {
+          inserted: totalInserted,
+          duplicates: totalDuplicates,
+        });
+
         setSyncResult({
           success: true,
           message: `Synced ${totalInserted} new records (${totalDuplicates} already synced)`,
@@ -89,13 +96,19 @@ export default function SettingsScreen() {
         const newLastSync = await healthKit.getLastSyncTime();
         setLastSyncTime(newLastSync);
       } else {
+        logger.error('Settings', 'Health Sync failed', {
+          error: result.error,
+        });
         setSyncResult({
           success: false,
           message: result.error || 'Sync failed',
         });
       }
     } catch (error) {
-      console.error('Sync error:', error);
+      logger.error('Settings', 'Health Sync threw exception', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       setSyncResult({
         success: false,
         message: error instanceof Error ? error.message : 'Sync failed',

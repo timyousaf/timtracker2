@@ -17,6 +17,7 @@ import {
 } from '@kingstinct/react-native-healthkit';
 
 import { apiFetch } from '../api';
+import { logger } from '../logger';
 import {
   HealthMetricRecord,
   WorkoutRecord,
@@ -60,9 +61,12 @@ function getTimezone(): string {
  */
 export async function checkHealthKitAvailable(): Promise<boolean> {
   try {
-    return await isHealthDataAvailable();
+    logger.info('HealthKit', 'Checking HealthKit availability...');
+    const available = await isHealthDataAvailable();
+    logger.info('HealthKit', `HealthKit available: ${available}`);
+    return available;
   } catch (error) {
-    console.error('Error checking HealthKit availability:', error);
+    logger.error('HealthKit', 'Error checking HealthKit availability', error);
     return false;
   }
 }
@@ -85,17 +89,24 @@ export async function requestHealthKitPermissions(): Promise<boolean> {
     // For workouts, use HKWorkoutTypeIdentifier
     const allTypes = [...quantityTypes, ...categoryTypes, 'HKWorkoutTypeIdentifier'];
     
-    console.log('Requesting HealthKit permissions for types:', allTypes);
+    logger.info('HealthKit', 'Requesting HealthKit permissions', { 
+      typeCount: allTypes.length,
+      types: allTypes 
+    });
     
     // Cast to any to handle library type variations
     await requestAuthorization({
       toRead: allTypes as any,
     });
     
+    logger.info('HealthKit', 'HealthKit permissions granted successfully');
     return true;
   } catch (error) {
-    console.error('Error requesting HealthKit permissions:', error);
-    console.error('Error details:', JSON.stringify(error, null, 2));
+    logger.error('HealthKit', 'Error requesting HealthKit permissions', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      errorObject: error,
+    });
     return false;
   }
 }
@@ -174,7 +185,10 @@ async function syncQuantityMetrics(
         await setAnchor(mapping.healthkitType, result.newAnchor);
       }
     } catch (error) {
-      console.error(`Error syncing ${mapping.canonicalType}:`, error);
+      logger.error('HealthKit', `Error syncing ${mapping.canonicalType}`, {
+        error: error instanceof Error ? error.message : String(error),
+        healthkitType: mapping.healthkitType,
+      });
       // Continue with other metrics
     }
   }
@@ -226,7 +240,9 @@ async function syncQuantityMetrics(
       await setAnchor(HEART_RATE_MAPPING.healthkitType, hrResult.newAnchor);
     }
   } catch (error) {
-    console.error('Error syncing heart rate:', error);
+    logger.error('HealthKit', 'Error syncing heart rate', {
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
   
   // Upload to API
@@ -304,7 +320,9 @@ async function syncSleep(
       await setAnchor('sleepAnalysis', result.newAnchor);
     }
   } catch (error) {
-    console.error('Error syncing sleep:', error);
+    logger.error('HealthKit', 'Error syncing sleep', {
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
   
   // Also sync mindful minutes to metrics
@@ -347,7 +365,9 @@ async function syncSleep(
       await setAnchor(MINDFUL_MAPPING.healthkitType, mindfulResult.newAnchor);
     }
   } catch (error) {
-    console.error('Error syncing mindful minutes:', error);
+    logger.error('HealthKit', 'Error syncing mindful minutes', {
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
   
   // Upload sleep records
@@ -440,7 +460,9 @@ async function syncWorkouts(
       });
     }
   } catch (error) {
-    console.error('Error syncing workouts:', error);
+    logger.error('HealthKit', 'Error syncing workouts', {
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
   
   if (records.length === 0) {
@@ -533,7 +555,10 @@ export async function syncAllHealthData(
     
     return result;
   } catch (error) {
-    console.error('Sync error:', error);
+    logger.error('HealthKit', 'Sync failed with error', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     result.error = error instanceof Error ? error.message : 'Unknown error';
     return result;
   }

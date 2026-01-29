@@ -5,7 +5,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import { DrawerContentScrollView, DrawerContentComponentProps } from '@react-navigation/drawer';
 import { useRouter } from 'expo-router';
-import { Home, Settings } from 'lucide-react-native';
+import { Home, Settings, FileText } from 'lucide-react-native';
 import { colors, fontSizes, fonts, spacing, borderRadius } from '@/lib/theme';
 
 interface MenuItem {
@@ -17,6 +17,7 @@ interface MenuItem {
 const MENU_ITEMS: MenuItem[] = [
   { label: 'Home', route: '/(drawer)', icon: Home },
   { label: 'Settings', route: '/(drawer)/settings', icon: Settings },
+  { label: 'Logs', route: '/(drawer)/logs', icon: FileText },
 ];
 
 export function DrawerContent(props: DrawerContentComponentProps) {
@@ -41,7 +42,8 @@ export function DrawerContent(props: DrawerContentComponentProps) {
           {MENU_ITEMS.map((item) => {
             const isActive = 
               (item.route === '/(drawer)' && currentRoute === 'index') ||
-              (item.route === '/(drawer)/settings' && currentRoute === 'settings');
+              (item.route === '/(drawer)/settings' && currentRoute === 'settings') ||
+              (item.route === '/(drawer)/logs' && currentRoute === 'logs');
             
             const IconComponent = item.icon;
             const iconColor = isActive ? colors.foreground : colors.foregroundMuted;

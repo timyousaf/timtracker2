@@ -40,6 +40,13 @@ export default function DrawerLayout() {
           title: 'Settings',
         }}
       />
+      <Drawer.Screen
+        name="logs"
+        options={{
+          drawerLabel: 'Logs',
+          title: 'Logs',
+        }}
+      />
     </Drawer>
   );
 }
