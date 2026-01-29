@@ -40,7 +40,7 @@ export function getStartOfDay(dateStr: string): string {
  * Group samples by date
  */
 export function groupByDate<T extends Sample>(
-  samples: T[]
+  samples: readonly T[]
 ): Map<string, T[]> {
   const groups = new Map<string, T[]>();
   
@@ -82,7 +82,7 @@ export function aggregateValues(
  * Aggregate samples to daily values
  */
 export function aggregateSamplesToDaily<T extends Sample>(
-  samples: T[],
+  samples: readonly T[],
   method: AggregationMethod,
   getValue: (sample: T) => number | undefined
 ): AggregatedValue[] {
@@ -112,7 +112,7 @@ export function aggregateSamplesToDaily<T extends Sample>(
  * Special aggregation for heart rate - returns min, max, and avg
  */
 export function aggregateHeartRate(
-  samples: Sample[]
+  samples: readonly Sample[]
 ): { date: string; min: number; max: number; avg: number }[] {
   const grouped = groupByDate(samples);
   const result: { date: string; min: number; max: number; avg: number }[] = [];
@@ -177,7 +177,7 @@ export function calculateDurationMinutes(
  * Aggregate mindful sessions to daily minutes
  */
 export function aggregateMindfulSessions(
-  samples: Sample[]
+  samples: readonly Sample[]
 ): AggregatedValue[] {
   const grouped = groupByDate(samples);
   const result: AggregatedValue[] = [];

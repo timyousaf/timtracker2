@@ -13,7 +13,7 @@ import {
   requestAuthorization,
   queryQuantitySamplesWithAnchor,
   queryCategorySamplesWithAnchor,
-  queryWorkouts,
+  queryWorkoutSamples,
 } from '@kingstinct/react-native-healthkit';
 
 import { apiFetch } from '../api';
@@ -75,8 +75,9 @@ export async function requestHealthKitPermissions(): Promise<boolean> {
     const quantityTypes = getQuantityTypeIdentifiers();
     const categoryTypes = CATEGORY_TYPE_IDENTIFIERS;
     
+    // Cast to any to handle library type mismatches
     await requestAuthorization({
-      toRead: [...quantityTypes, ...categoryTypes, 'workoutType'],
+      toRead: [...quantityTypes, ...categoryTypes, 'workoutType'] as any,
     });
     
     return true;
@@ -380,14 +381,17 @@ async function syncWorkouts(
   try {
     // Query workouts - the library doesn't support anchors for workouts yet,
     // so we query all and rely on server-side deduplication
-    const workouts = await queryWorkouts({
+    const workouts = await queryWorkoutSamples({
       limit: 0, // Get all
     });
     
     for (const workout of workouts) {
+      // Cast workout to access properties - library types may not expose all fields
+      const w = workout as any;
+      
       const durationSeconds = calculateDurationSeconds(
-        workout.startDate,
-        workout.endDate
+        w.startDate,
+        w.endDate
       );
       
       // Build metrics object
@@ -395,16 +399,16 @@ async function syncWorkouts(
       
       metrics['duration'] = { value: durationSeconds, unit: 'seconds' };
       
-      if (workout.totalDistance) {
+      if (w.totalDistance) {
         metrics['Distance (mi)'] = {
-          value: roundTo(convertUnit(workout.totalDistance, 'm', 'mi'), 2),
+          value: roundTo(convertUnit(w.totalDistance, 'm', 'mi'), 2),
           unit: 'mi',
         };
       }
       
-      if (workout.totalEnergyBurned) {
+      if (w.totalEnergyBurned) {
         metrics['Total Energy (kcal)'] = {
-          value: roundTo(workout.totalEnergyBurned, 0),
+          value: roundTo(w.totalEnergyBurned, 0),
           unit: 'kcal',
         };
       }
@@ -413,10 +417,10 @@ async function syncWorkouts(
       // This can be enhanced in the future
       
       records.push({
-        healthkit_uuid: workout.uuid || `workout_${workout.startDate}_${workout.endDate}`,
-        type: getWorkoutTypeName(workout.workoutActivityType),
-        start_time: new Date(workout.startDate).toISOString(),
-        end_time: new Date(workout.endDate).toISOString(),
+        healthkit_uuid: w.uuid || `workout_${w.startDate}_${w.endDate}`,
+        type: getWorkoutTypeName(String(w.workoutActivityType)),
+        start_time: new Date(w.startDate).toISOString(),
+        end_time: new Date(w.endDate).toISOString(),
         duration_seconds: durationSeconds,
         timezone,
         metrics,
