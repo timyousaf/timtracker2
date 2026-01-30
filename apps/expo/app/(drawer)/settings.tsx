@@ -224,18 +224,38 @@ export default function SettingsScreen() {
                     </View>
                   )}
 
-                  <TouchableOpacity
-                    style={[
-                      styles.syncButton,
-                      isSyncing && styles.syncButtonDisabled,
-                    ]}
-                    onPress={handleSync}
-                    disabled={isSyncing}
-                  >
-                    <Text style={styles.syncButtonText}>
-                      {isSyncing ? 'Syncing...' : 'Sync Now'}
-                    </Text>
-                  </TouchableOpacity>
+                  <View style={styles.buttonRow}>
+                    <TouchableOpacity
+                      style={[
+                        styles.syncButton,
+                        isSyncing && styles.syncButtonDisabled,
+                      ]}
+                      onPress={handleSync}
+                      disabled={isSyncing}
+                    >
+                      <Text style={styles.syncButtonText}>
+                        {isSyncing ? 'Syncing...' : 'Sync Now'}
+                      </Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      style={[
+                        styles.resetButton,
+                        isSyncing && styles.syncButtonDisabled,
+                      ]}
+                      onPress={async () => {
+                        if (!healthKit || isSyncing) return;
+                        logger.info('Settings', 'User initiated Reset & Full Sync');
+                        await healthKit.clearAllAnchors();
+                        handleSync();
+                      }}
+                      disabled={isSyncing}
+                    >
+                      <Text style={styles.resetButtonText}>
+                        Reset & Full Sync
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </>
               ) : (
                 <Text style={styles.healthUnavailable}>
@@ -395,7 +415,12 @@ const styles = StyleSheet.create({
   resultTextError: {
     color: colors.destructive,
   },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: spacing[2],
+  },
   syncButton: {
+    flex: 1,
     backgroundColor: colors.primary,
     borderRadius: borderRadius.lg,
     padding: spacing[4],
@@ -407,6 +432,21 @@ const styles = StyleSheet.create({
   syncButtonText: {
     color: '#fff',
     fontSize: fontSizes.base,
+    fontFamily: fonts.regular,
+    fontWeight: '600',
+  },
+  resetButton: {
+    flex: 1,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.lg,
+    padding: spacing[4],
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  resetButtonText: {
+    color: colors.foreground,
+    fontSize: fontSizes.sm,
     fontFamily: fonts.regular,
     fontWeight: '600',
   },

@@ -193,6 +193,8 @@ async function syncQuantityMetrics(
         }
       );
       
+      logger.info('HealthKit', `Fetched ${result.samples.length} samples for ${mapping.canonicalType}`);
+      
       if (result.samples.length > 0) {
         // Aggregate to daily values
         const dailyValues = aggregateSamplesToDaily(
@@ -200,6 +202,8 @@ async function syncQuantityMetrics(
           mapping.aggregation,
           (s) => s.quantity
         );
+        
+        logger.info('HealthKit', `Aggregated to ${dailyValues.length} daily values for ${mapping.canonicalType}`);
         
         // Convert to records
         for (const daily of dailyValues) {
@@ -219,6 +223,8 @@ async function syncQuantityMetrics(
             timezone,
           });
         }
+      } else {
+        logger.info('HealthKit', `No samples found for ${mapping.canonicalType} (may need permission or no data exists)`);
       }
       
       // Store new anchor
@@ -229,6 +235,7 @@ async function syncQuantityMetrics(
       logger.error('HealthKit', `Error syncing ${mapping.canonicalType}`, {
         error: error instanceof Error ? error.message : String(error),
         healthkitType: mapping.healthkitType,
+        hkIdentifier: QUANTITY_TYPE_TO_HK_IDENTIFIER[mapping.healthkitType],
       });
       // Continue with other metrics
     }
