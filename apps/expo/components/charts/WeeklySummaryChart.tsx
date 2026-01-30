@@ -8,14 +8,14 @@ import { EChart, echarts } from './EChart';
 import { colors, fontSizes, fonts, spacing, borderRadius } from '@/lib/theme';
 import type { WeeklySummaryData } from '@timtracker/ui/types';
 import { format, parseISO } from 'date-fns';
+import { Dumbbell, Utensils, BedDouble, Brain } from 'lucide-react-native';
 
 const screenWidth = Dimensions.get('window').width;
 const CARD_PADDING_X = spacing[2];
 
-// Row labels (bottom to top in ECharts grid)
-const ROW_LABELS = ['Mindful', 'Sleep', 'Diet', 'Exercise'];
-const ROW_TYPES = ['mindful', 'sleep', 'diet', 'exercise'] as const;
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+// Left margin for icons
+const ICON_COLUMN_WIDTH = 32;
 
 // Color schemes
 const EXERCISE_COLOR = colors.chart.emerald500;
@@ -113,7 +113,7 @@ export function WeeklySummaryChart({
     return {
       tooltip: {
         confine: true,
-        enterable: true, // Allow tapping on tooltip without triggering cell underneath
+        // Removed enterable: true - allows tooltip to dismiss when tapping on it
         backgroundColor: colors.card,
         borderColor: colors.border,
         borderWidth: 1,
@@ -208,8 +208,8 @@ export function WeeklySummaryChart({
         },
       },
       grid: {
-        left: 60,
-        right: 10,
+        left: ICON_COLUMN_WIDTH + 4, // Space for icons rendered via RN
+        right: 4, // Reduced to prevent overflow
         top: 30,
         bottom: 10,
         containLabel: false,
@@ -228,13 +228,10 @@ export function WeeklySummaryChart({
       },
       yAxis: {
         type: 'category',
-        data: ROW_LABELS,
+        data: ['', '', '', ''], // Empty labels - icons rendered via RN overlay
         axisLine: { show: false },
         axisTick: { show: false },
-        axisLabel: {
-          fontSize: 11,
-          color: colors.foregroundMuted,
-        },
+        axisLabel: { show: false }, // Hide text labels
         splitLine: { show: false },
       },
       series: [
@@ -363,6 +360,13 @@ export function WeeklySummaryChart({
     );
   }
 
+  // Chart dimensions for icon positioning
+  const chartHeight = 180;
+  const gridTop = 30;
+  const gridBottom = 10;
+  const gridHeight = chartHeight - gridTop - gridBottom;
+  const cellHeight = gridHeight / 4; // 4 rows
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -388,7 +392,18 @@ export function WeeklySummaryChart({
         </TouchableOpacity>
       </View>
       
-      <EChart option={optionWithColors} height={180} />
+      <View style={styles.chartWrapper}>
+        {/* Icon column overlay - positioned absolutely over the chart area */}
+        <View style={[styles.iconColumn, { top: gridTop, height: gridHeight }]}>
+          {/* Icons from top to bottom: Exercise, Diet, Sleep, Mindful (reversed from ROW_ICONS) */}
+          {[Dumbbell, Utensils, BedDouble, Brain].map((Icon, index) => (
+            <View key={index} style={[styles.iconCell, { height: cellHeight }]}>
+              <Icon size={16} color={colors.foregroundMuted} strokeWidth={1.5} />
+            </View>
+          ))}
+        </View>
+        <EChart option={optionWithColors} height={chartHeight} />
+      </View>
     </View>
   );
 }
@@ -441,6 +456,20 @@ const styles = StyleSheet.create({
   },
   navButtonTextDisabled: {
     color: colors.foregroundSubtle,
+  },
+  chartWrapper: {
+    position: 'relative',
+  },
+  iconColumn: {
+    position: 'absolute',
+    left: 0,
+    width: ICON_COLUMN_WIDTH,
+    zIndex: 10,
+    flexDirection: 'column',
+  },
+  iconCell: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   noData: {
     height: 150,

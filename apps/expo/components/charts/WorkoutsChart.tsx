@@ -125,7 +125,7 @@ export function WorkoutsChart({ data, loading }: WorkoutsChartProps) {
       grid: {
         left: 40,
         right: 40,
-        top: 20,
+        top: 30, // Increased to prevent cut-off by card header
         bottom: 60,
       },
       xAxis: {
