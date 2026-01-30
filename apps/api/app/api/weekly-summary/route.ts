@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { getPool } from '@/lib/db';
 import { getCached, setCached, createCacheKey } from '@/lib/cache';
+import { calculateDailySleep } from '@/lib/sleepCalculation';
 import type { WeeklySummaryApiResponse, WeeklySummaryDay } from '@/lib/types';
 
 // Force dynamic rendering for this route
@@ -158,28 +159,11 @@ export async function GET(request: NextRequest) {
       mealsByDate.set(row.date, meals);
     }
 
-    // 3. Fetch sleep data - sum qty for actual sleep stages only
-    // We filter to only Core, Deep, REM sleep stages (actual sleep time)
-    // Excluding: 'In Bed', 'InBed' (total time in bed which contains the other stages)
-    //            'Awake' (time awake during the night)
-    // The qty column already contains duration in hours for each stage
-    const sleepResult = await pool.query<{
-      date: string;
-      total_hours: number;
-    }>(
-      `SELECT 
-         DATE(end_time AT TIME ZONE 'America/New_York')::text as date,
-         SUM(qty) as total_hours
-       FROM ios_apple_health_sleep
-       WHERE value IN ('Core', 'Deep', 'REM')
-         AND DATE(end_time AT TIME ZONE 'America/New_York') >= $1
-         AND DATE(end_time AT TIME ZONE 'America/New_York') <= $2
-       GROUP BY DATE(end_time AT TIME ZONE 'America/New_York')`,
-      [startDateStr, endDateStr]
-    );
-
-    for (const row of sleepResult.rows) {
-      sleepByDate.set(row.date, row.total_hours);
+    // 3. Fetch sleep data using shared algorithm
+    // Uses session-based calculation with interval merging and source priority
+    const sleepData = await calculateDailySleep(pool, startDateStr, endDateStr);
+    for (const [date, hours] of sleepData) {
+      sleepByDate.set(date, hours);
     }
 
     // 4. Fetch mindful minutes
