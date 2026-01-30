@@ -234,7 +234,7 @@ async function syncQuantityMetrics(
     }
   }
   
-  // Handle heart rate separately (min/max/avg)
+  // Handle heart rate separately (min/max/avg) - use batching to avoid memory crash
   onProgress?.({
     phase: 'metrics',
     current: QUANTITY_MAPPINGS.length + 1,
@@ -244,42 +244,92 @@ async function syncQuantityMetrics(
   
   try {
     const hrHkIdentifier = QUANTITY_TYPE_TO_HK_IDENTIFIER[HEART_RATE_MAPPING.healthkitType];
-    const hrAnchor = await getAnchor(HEART_RATE_MAPPING.healthkitType);
-    const hrResult = await queryQuantitySamplesWithAnchor(
-      hrHkIdentifier as any,
-      {
-        limit: 0,
-        anchor: hrAnchor || undefined,
-        unit: HEART_RATE_MAPPING.healthkitUnit,
-      }
-    );
+    let hrAnchor = await getAnchor(HEART_RATE_MAPPING.healthkitType);
     
-    if (hrResult.samples.length > 0) {
-      const hrAggregated = aggregateHeartRate(hrResult.samples);
+    // Heart rate can have millions of samples - fetch in batches to avoid memory crash
+    const HR_BATCH_SIZE = 5000;
+    let batchCount = 0;
+    let totalHrSamples = 0;
+    
+    // Accumulate daily stats across batches using a map
+    const dailyHrStats: Map<string, { min: number; max: number; sum: number; count: number }> = new Map();
+    
+    let hasMoreData = true;
+    while (hasMoreData) {
+      batchCount++;
+      logger.info('HealthKit', `Fetching heart rate batch ${batchCount}...`);
       
-      for (const daily of hrAggregated) {
-        for (const output of HEART_RATE_MAPPING.outputs) {
-          const value =
-            output.aggregation === 'min'
-              ? daily.min
-              : output.aggregation === 'max'
-              ? daily.max
-              : daily.avg;
-          
-          records.push({
-            healthkit_uuid: `${daily.date}_${output.canonicalType}`,
-            date: getStartOfDay(daily.date),
-            type: output.canonicalType,
-            value,
-            unit: output.unit,
-            timezone,
-          });
+      const hrResult = await queryQuantitySamplesWithAnchor(
+        hrHkIdentifier as any,
+        {
+          limit: HR_BATCH_SIZE,
+          anchor: hrAnchor || undefined,
+          unit: HEART_RATE_MAPPING.healthkitUnit,
         }
+      );
+      
+      totalHrSamples += hrResult.samples.length;
+      logger.info('HealthKit', `Heart rate batch ${batchCount}: ${hrResult.samples.length} samples (total: ${totalHrSamples})`);
+      
+      // Process this batch - accumulate into daily stats
+      for (const sample of hrResult.samples) {
+        const dateKey = new Date(sample.startDate).toISOString().split('T')[0];
+        const value = sample.quantity;
+        
+        const existing = dailyHrStats.get(dateKey);
+        if (existing) {
+          existing.min = Math.min(existing.min, value);
+          existing.max = Math.max(existing.max, value);
+          existing.sum += value;
+          existing.count++;
+        } else {
+          dailyHrStats.set(dateKey, { min: value, max: value, sum: value, count: 1 });
+        }
+      }
+      
+      // Update anchor for next batch or final save
+      if (hrResult.newAnchor) {
+        hrAnchor = hrResult.newAnchor;
+      }
+      
+      // Check if we got fewer samples than batch size (means we're done)
+      hasMoreData = hrResult.samples.length === HR_BATCH_SIZE;
+      
+      // Update progress
+      onProgress?.({
+        phase: 'metrics',
+        current: QUANTITY_MAPPINGS.length + 1,
+        total: QUANTITY_MAPPINGS.length + 1,
+        message: `Syncing heart rate... (${totalHrSamples} samples)`,
+      });
+    }
+    
+    // Convert accumulated stats to records
+    for (const [dateKey, stats] of dailyHrStats) {
+      for (const output of HEART_RATE_MAPPING.outputs) {
+        const value =
+          output.aggregation === 'min'
+            ? stats.min
+            : output.aggregation === 'max'
+            ? stats.max
+            : Math.round(stats.sum / stats.count);
+        
+        records.push({
+          healthkit_uuid: `${dateKey}_${output.canonicalType}`,
+          date: getStartOfDay(dateKey),
+          type: output.canonicalType,
+          value,
+          unit: output.unit,
+          timezone,
+        });
       }
     }
     
-    if (hrResult.newAnchor) {
-      await setAnchor(HEART_RATE_MAPPING.healthkitType, hrResult.newAnchor);
+    logger.info('HealthKit', `Heart rate sync complete: ${totalHrSamples} samples → ${dailyHrStats.size} days`);
+    
+    // Save final anchor
+    if (hrAnchor) {
+      await setAnchor(HEART_RATE_MAPPING.healthkitType, hrAnchor);
     }
   } catch (error) {
     logger.error('HealthKit', 'Error syncing heart rate', {
@@ -330,13 +380,26 @@ async function syncSleep(
   
   try {
     const sleepHkIdentifier = CATEGORY_TYPE_TO_HK_IDENTIFIER['sleepAnalysis'];
-    const anchor = await getAnchor('sleepAnalysis');
-    const result = await queryCategorySamplesWithAnchor(sleepHkIdentifier as any, {
-      limit: 0,
-      anchor: anchor || undefined,
-    });
+    let sleepAnchor = await getAnchor('sleepAnalysis');
     
-    if (result.samples.length > 0) {
+    // Sleep can have many segments - fetch in batches
+    const SLEEP_BATCH_SIZE = 2000;
+    let batchCount = 0;
+    let totalSleepSamples = 0;
+    let hasMoreData = true;
+    
+    while (hasMoreData) {
+      batchCount++;
+      logger.info('HealthKit', `Fetching sleep batch ${batchCount}...`);
+      
+      const result = await queryCategorySamplesWithAnchor(sleepHkIdentifier as any, {
+        limit: SLEEP_BATCH_SIZE,
+        anchor: sleepAnchor || undefined,
+      });
+      
+      totalSleepSamples += result.samples.length;
+      logger.info('HealthKit', `Sleep batch ${batchCount}: ${result.samples.length} samples (total: ${totalSleepSamples})`);
+      
       for (const sample of result.samples) {
         const sleepValue = sample.value?.toString() || '';
         const canonicalType = getSleepCanonicalType(sleepValue);
@@ -357,10 +420,25 @@ async function syncSleep(
           });
         }
       }
+      
+      if (result.newAnchor) {
+        sleepAnchor = result.newAnchor;
+      }
+      
+      hasMoreData = result.samples.length === SLEEP_BATCH_SIZE;
+      
+      onProgress?.({
+        phase: 'sleep',
+        current: 0,
+        total: 1,
+        message: `Syncing sleep data... (${totalSleepSamples} samples)`,
+      });
     }
     
-    if (result.newAnchor) {
-      await setAnchor('sleepAnalysis', result.newAnchor);
+    logger.info('HealthKit', `Sleep sync complete: ${totalSleepSamples} samples → ${records.length} records`);
+    
+    if (sleepAnchor) {
+      await setAnchor('sleepAnalysis', sleepAnchor);
     }
   } catch (error) {
     logger.error('HealthKit', 'Error syncing sleep', {
@@ -368,45 +446,72 @@ async function syncSleep(
     });
   }
   
-  // Also sync mindful minutes to metrics
+  // Also sync mindful minutes to metrics (with batching)
   try {
     const mindfulHkIdentifier = CATEGORY_TYPE_TO_HK_IDENTIFIER[MINDFUL_MAPPING.healthkitType];
-    const mindfulAnchor = await getAnchor(MINDFUL_MAPPING.healthkitType);
-    const mindfulResult = await queryCategorySamplesWithAnchor(
-      mindfulHkIdentifier as any,
-      {
-        limit: 0,
-        anchor: mindfulAnchor || undefined,
-      }
-    );
+    let mindfulAnchor = await getAnchor(MINDFUL_MAPPING.healthkitType);
     
-    if (mindfulResult.samples.length > 0) {
-      const dailyMindful = aggregateMindfulSessions(mindfulResult.samples);
+    const MINDFUL_BATCH_SIZE = 2000;
+    let batchCount = 0;
+    let totalMindfulSamples = 0;
+    let hasMoreData = true;
+    
+    // Accumulate daily totals across batches
+    const dailyMindfulMap: Map<string, number> = new Map();
+    
+    while (hasMoreData) {
+      batchCount++;
       
-      // Upload mindful minutes as metrics
-      const mindfulRecords: HealthMetricRecord[] = dailyMindful.map((daily) => ({
-        healthkit_uuid: `${daily.date}_${MINDFUL_MAPPING.canonicalType}`,
-        date: getStartOfDay(daily.date),
+      const mindfulResult = await queryCategorySamplesWithAnchor(
+        mindfulHkIdentifier as any,
+        {
+          limit: MINDFUL_BATCH_SIZE,
+          anchor: mindfulAnchor || undefined,
+        }
+      );
+      
+      totalMindfulSamples += mindfulResult.samples.length;
+      
+      // Accumulate into daily totals
+      for (const sample of mindfulResult.samples) {
+        const dateKey = new Date(sample.startDate).toISOString().split('T')[0];
+        const durationMinutes = calculateDurationHours(sample.startDate, sample.endDate) * 60;
+        const existing = dailyMindfulMap.get(dateKey) || 0;
+        dailyMindfulMap.set(dateKey, existing + durationMinutes);
+      }
+      
+      if (mindfulResult.newAnchor) {
+        mindfulAnchor = mindfulResult.newAnchor;
+      }
+      
+      hasMoreData = mindfulResult.samples.length === MINDFUL_BATCH_SIZE;
+    }
+    
+    // Convert to records and upload
+    if (dailyMindfulMap.size > 0) {
+      const mindfulRecords: HealthMetricRecord[] = Array.from(dailyMindfulMap).map(([date, value]) => ({
+        healthkit_uuid: `${date}_${MINDFUL_MAPPING.canonicalType}`,
+        date: getStartOfDay(date),
         type: MINDFUL_MAPPING.canonicalType,
-        value: daily.value,
+        value: roundTo(value, 2),
         unit: MINDFUL_MAPPING.unit,
         timezone,
       }));
       
-      if (mindfulRecords.length > 0) {
-        await apiFetch<IngestResponse>(
-          '/api/ingest/health-metrics',
-          getToken,
-          {
-            method: 'POST',
-            body: JSON.stringify({ records: mindfulRecords }),
-          }
-        );
-      }
+      await apiFetch<IngestResponse>(
+        '/api/ingest/health-metrics',
+        getToken,
+        {
+          method: 'POST',
+          body: JSON.stringify({ records: mindfulRecords }),
+        }
+      );
+      
+      logger.info('HealthKit', `Mindful sync complete: ${totalMindfulSamples} samples → ${mindfulRecords.length} days`);
     }
     
-    if (mindfulResult.newAnchor) {
-      await setAnchor(MINDFUL_MAPPING.healthkitType, mindfulResult.newAnchor);
+    if (mindfulAnchor) {
+      await setAnchor(MINDFUL_MAPPING.healthkitType, mindfulAnchor);
     }
   } catch (error) {
     logger.error('HealthKit', 'Error syncing mindful minutes', {
