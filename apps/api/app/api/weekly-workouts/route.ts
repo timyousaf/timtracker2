@@ -45,9 +45,9 @@ export async function GET(request: NextRequest) {
     
     let query = `
       SELECT type, start_time, duration_seconds, metrics
-      FROM apple_health_workouts
+      FROM ios_apple_health_workouts
       WHERE start_time IS NOT NULL
-        AND type NOT IN ('Walk', 'Outdoor Walk')
+        AND type NOT IN ('Walking')
     `;
 
     if (start) {

@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
       SELECT 
         DATE(end_time AT TIME ZONE 'America/New_York')::text as date,
         SUM(qty) as total_hours
-      FROM apple_health_sleep
+      FROM ios_apple_health_sleep
       WHERE value IN ('Core', 'Deep', 'REM')
     `;
 

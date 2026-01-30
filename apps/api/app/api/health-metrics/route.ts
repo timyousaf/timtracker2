@@ -24,10 +24,10 @@ export async function GET() {
     // Get database connection pool
     const pool = getPool();
 
-    // Query the first 10 rows from apple_health_metrics
+    // Query the first 10 rows from ios_apple_health_metrics
     const result = await pool.query<HealthMetric>(
       `SELECT id, date, type, value, unit, timezone
-       FROM apple_health_metrics
+       FROM ios_apple_health_metrics
        ORDER BY date DESC
        LIMIT 10`
     );

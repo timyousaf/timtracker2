@@ -94,9 +94,9 @@ export async function GET(request: NextRequest) {
       type: string;
     }>(
       `SELECT start_time, duration_seconds, type
-       FROM apple_health_workouts
+       FROM ios_apple_health_workouts
        WHERE start_time >= $1 AND start_time < $2::date + interval '1 day'
-         AND type NOT IN ('Walk', 'Outdoor Walk')
+         AND type NOT IN ('Walking')
        ORDER BY start_time`,
       [startDateStr, endDateStr]
     );
@@ -170,7 +170,7 @@ export async function GET(request: NextRequest) {
       `SELECT 
          DATE(end_time AT TIME ZONE 'America/New_York')::text as date,
          SUM(qty) as total_hours
-       FROM apple_health_sleep
+       FROM ios_apple_health_sleep
        WHERE value IN ('Core', 'Deep', 'REM')
          AND DATE(end_time AT TIME ZONE 'America/New_York') >= $1
          AND DATE(end_time AT TIME ZONE 'America/New_York') <= $2
@@ -188,7 +188,7 @@ export async function GET(request: NextRequest) {
       value: number;
     }>(
       `SELECT date::date::text as date, value
-       FROM apple_health_metrics
+       FROM ios_apple_health_metrics
        WHERE type = 'Mindful Minutes (min)'
          AND date >= $1 AND date <= $2`,
       [startDateStr, endDateStr]

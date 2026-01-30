@@ -3,16 +3,16 @@ import { getPool } from '@/lib/db';
 
 // Tables exposed to GPT with metadata
 const RAW_TABLES: Record<string, { description: string; recommendedEndpoint?: string }> = {
-  apple_health_sleep: {
-    description: 'Raw Apple Health sleep intervals. Use /api/sleep for daily totals.',
+  ios_apple_health_sleep: {
+    description: 'Raw Apple Health sleep intervals synced from iOS app. Use /api/sleep for daily totals.',
     recommendedEndpoint: '/api/sleep',
   },
-  apple_health_metrics: {
-    description: 'Health metrics from Apple Health (heart rate, HRV, etc).',
+  ios_apple_health_metrics: {
+    description: 'Health metrics from Apple Health synced from iOS app (heart rate, HRV, etc).',
     recommendedEndpoint: '/api/metrics',
   },
-  apple_health_workouts: {
-    description: 'Workout sessions from Apple Health.',
+  ios_apple_health_workouts: {
+    description: 'Workout sessions from Apple Health synced from iOS app.',
     recommendedEndpoint: '/api/weekly-workouts',
   },
   hevy_workouts: {
@@ -34,9 +34,9 @@ const RAW_TABLES: Record<string, { description: string; recommendedEndpoint?: st
 };
 
 const ANALYTIC_ENDPOINTS = [
-  { path: '/api/sleep', method: 'GET', description: 'Aggregated daily sleep totals', sourceTable: 'apple_health_sleep' },
-  { path: '/api/metrics', method: 'GET', description: 'Daily averages for health metrics (requires type param)', sourceTable: 'apple_health_metrics' },
-  { path: '/api/weekly-workouts', method: 'GET', description: 'Weekly workout summaries by type', sourceTable: 'apple_health_workouts' },
+  { path: '/api/sleep', method: 'GET', description: 'Aggregated daily sleep totals', sourceTable: 'ios_apple_health_sleep' },
+  { path: '/api/metrics', method: 'GET', description: 'Daily averages for health metrics (requires type param)', sourceTable: 'ios_apple_health_metrics' },
+  { path: '/api/weekly-workouts', method: 'GET', description: 'Weekly workout summaries by type', sourceTable: 'ios_apple_health_workouts' },
   { path: '/api/calendar-heatmap', method: 'GET', description: 'Calendar heatmap data (requires type param)', sourceTable: null },
   { path: '/api/meal-scores', method: 'GET', description: 'Meal logs with health scores and trends', sourceTable: 'meal_logs' },
   { path: '/api/strength-volume', method: 'GET', description: 'Weekly strength training volume', sourceTable: 'hevy_workouts' },

@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     
     let query = `
       SELECT date::date::text, value
-      FROM apple_health_metrics
+      FROM ios_apple_health_metrics
       WHERE type = $1
     `;
 

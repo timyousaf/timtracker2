@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
     if (chartType === 'mindful') {
       const result = await pool.query<{ date: string; value: number }>(
         `SELECT date::date::text as date, value
-         FROM apple_health_metrics
+         FROM ios_apple_health_metrics
          WHERE type = 'Mindful Minutes (min)'
            AND date >= $1 AND date <= $2`,
         [startDateStr, endDateStr]
@@ -121,9 +121,9 @@ export async function GET(request: NextRequest) {
         metrics: string | Record<string, any>;
       }>(
         `SELECT start_time, type, duration_seconds, metrics
-         FROM apple_health_workouts
+         FROM ios_apple_health_workouts
          WHERE start_time >= $1 AND start_time < $2::date + interval '1 day'
-           AND type NOT IN ('Walk', 'Outdoor Walk')`,
+           AND type NOT IN ('Walking')`,
         [startDateStr, endDateStr]
       );
 
