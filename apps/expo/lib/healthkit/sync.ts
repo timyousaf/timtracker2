@@ -418,6 +418,27 @@ async function syncQuantityMetrics(
 }
 
 /**
+ * Deduplicate sleep records by (start_time, end_time, value, source)
+ * This reduces data transfer since HealthKit often has duplicate entries with different UUIDs
+ */
+function deduplicateSleepRecords(records: SleepRecord[]): SleepRecord[] {
+  const seen = new Set<string>();
+  const deduped: SleepRecord[] = [];
+  
+  for (const record of records) {
+    // Create a key from start_time, end_time, value, source
+    const key = `${record.start_time}|${record.end_time}|${record.value}|${record.source}`;
+    
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduped.push(record);
+    }
+  }
+  
+  return deduped;
+}
+
+/**
  * Sync sleep data
  */
 async function syncSleep(
@@ -613,10 +634,19 @@ async function syncSleep(
     return { inserted: 0, duplicates: 0 };
   }
   
-  logger.info('HealthKit', `Uploading ${records.length} sleep records in batches...`);
+  // Deduplicate by (start_time, end_time, value, source) to reduce data transfer
+  // HealthKit often has duplicate entries with different UUIDs
+  const dedupedRecords = deduplicateSleepRecords(records);
+  const removedDupes = records.length - dedupedRecords.length;
+  
+  if (removedDupes > 0) {
+    logger.info('HealthKit', `Deduplicated sleep records: ${records.length} → ${dedupedRecords.length} (removed ${removedDupes} client-side duplicates)`);
+  }
+  
+  logger.info('HealthKit', `Uploading ${dedupedRecords.length} sleep records in batches...`);
   
   const result = await uploadInBatches(
-    records,
+    dedupedRecords,
     '/api/ingest/health-sleep',
     getToken,
     (uploaded, total) => {
