@@ -56,6 +56,53 @@ function getTimezone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 
+// Upload batch size - Vercel has timeout limits, so keep batches small
+const UPLOAD_BATCH_SIZE = 500;
+
+/**
+ * Upload records in batches to avoid timeout/size limits
+ */
+async function uploadInBatches<T>(
+  records: T[],
+  endpoint: string,
+  getToken: () => Promise<string | null>,
+  onProgress?: (uploaded: number, total: number) => void
+): Promise<{ inserted: number; duplicates: number }> {
+  let totalInserted = 0;
+  let totalDuplicates = 0;
+  
+  for (let i = 0; i < records.length; i += UPLOAD_BATCH_SIZE) {
+    const batch = records.slice(i, i + UPLOAD_BATCH_SIZE);
+    const batchNum = Math.floor(i / UPLOAD_BATCH_SIZE) + 1;
+    const totalBatches = Math.ceil(records.length / UPLOAD_BATCH_SIZE);
+    
+    logger.info('HealthKit', `Uploading batch ${batchNum}/${totalBatches} (${batch.length} records)`);
+    onProgress?.(i + batch.length, records.length);
+    
+    try {
+      const response = await apiFetch<IngestResponse>(
+        endpoint,
+        getToken,
+        {
+          method: 'POST',
+          body: JSON.stringify({ records: batch }),
+        }
+      );
+      
+      totalInserted += response.inserted;
+      totalDuplicates += response.duplicates;
+    } catch (error) {
+      logger.error('HealthKit', `Failed to upload batch ${batchNum}`, {
+        error: error instanceof Error ? error.message : String(error),
+        batchSize: batch.length,
+      });
+      throw error;
+    }
+  }
+  
+  return { inserted: totalInserted, duplicates: totalDuplicates };
+}
+
 /**
  * Check if HealthKit is available on this device
  */
@@ -344,28 +391,29 @@ async function syncQuantityMetrics(
     });
   }
   
-  // Upload to API
+  // Upload to API in batches
   if (records.length === 0) {
     return { inserted: 0, duplicates: 0 };
   }
   
-  onProgress?.({
-    phase: 'upload',
-    current: 0,
-    total: records.length,
-    message: `Uploading ${records.length} metric records...`,
-  });
+  logger.info('HealthKit', `Uploading ${records.length} metric records in batches...`);
   
-  const response = await apiFetch<IngestResponse>(
+  const result = await uploadInBatches(
+    records,
     '/api/ingest/health-metrics',
     getToken,
-    {
-      method: 'POST',
-      body: JSON.stringify({ records }),
+    (uploaded, total) => {
+      onProgress?.({
+        phase: 'upload',
+        current: uploaded,
+        total,
+        message: `Uploading metrics... ${uploaded}/${total}`,
+      });
     }
   );
   
-  return { inserted: response.inserted, duplicates: response.duplicates };
+  logger.info('HealthKit', `Metrics upload complete: ${result.inserted} inserted, ${result.duplicates} duplicates`);
+  return result;
 }
 
 /**
@@ -526,28 +574,29 @@ async function syncSleep(
     });
   }
   
-  // Upload sleep records
+  // Upload sleep records in batches
   if (records.length === 0) {
     return { inserted: 0, duplicates: 0 };
   }
   
-  onProgress?.({
-    phase: 'upload',
-    current: 0,
-    total: records.length,
-    message: `Uploading ${records.length} sleep records...`,
-  });
+  logger.info('HealthKit', `Uploading ${records.length} sleep records in batches...`);
   
-  const response = await apiFetch<IngestResponse>(
+  const result = await uploadInBatches(
+    records,
     '/api/ingest/health-sleep',
     getToken,
-    {
-      method: 'POST',
-      body: JSON.stringify({ records }),
+    (uploaded, total) => {
+      onProgress?.({
+        phase: 'upload',
+        current: uploaded,
+        total,
+        message: `Uploading sleep... ${uploaded}/${total}`,
+      });
     }
   );
   
-  return { inserted: response.inserted, duplicates: response.duplicates };
+  logger.info('HealthKit', `Sleep upload complete: ${result.inserted} inserted, ${result.duplicates} duplicates`);
+  return result;
 }
 
 /**
@@ -625,23 +674,24 @@ async function syncWorkouts(
     return { inserted: 0, duplicates: 0 };
   }
   
-  onProgress?.({
-    phase: 'upload',
-    current: 0,
-    total: records.length,
-    message: `Uploading ${records.length} workout records...`,
-  });
+  logger.info('HealthKit', `Uploading ${records.length} workout records in batches...`);
   
-  const response = await apiFetch<IngestResponse>(
+  const result = await uploadInBatches(
+    records,
     '/api/ingest/health-workouts',
     getToken,
-    {
-      method: 'POST',
-      body: JSON.stringify({ records }),
+    (uploaded, total) => {
+      onProgress?.({
+        phase: 'upload',
+        current: uploaded,
+        total,
+        message: `Uploading workouts... ${uploaded}/${total}`,
+      });
     }
   );
   
-  return { inserted: response.inserted, duplicates: response.duplicates };
+  logger.info('HealthKit', `Workouts upload complete: ${result.inserted} inserted, ${result.duplicates} duplicates`);
+  return result;
 }
 
 /**
