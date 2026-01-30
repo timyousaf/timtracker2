@@ -33,6 +33,7 @@ import {
   CATEGORY_TYPE_IDENTIFIERS,
   MINDFUL_MAPPING,
   getSleepCanonicalType,
+  getSleepValueString,
 } from './categoryMapping';
 import { getWorkoutTypeName } from './workoutMapping';
 import { roundTo, convertUnit } from './unitConversions';
@@ -465,13 +466,46 @@ async function syncSleep(
             sample.endDate
           );
           
+          // Extract source name - try multiple properties since HealthKit may use proxies
+          const sampleAny = sample as any;
+          let sourceName = 'Unknown';
+          
+          // Try source name first
+          if (sampleAny.sourceRevision?.source?.name && 
+              sampleAny.sourceRevision.source.name !== 'SourceProxy') {
+            sourceName = sampleAny.sourceRevision.source.name;
+          } 
+          // Try to extract from bundle identifier (e.g., "com.ouraring.oura" -> "Oura")
+          else if (sampleAny.sourceRevision?.source?.bundleIdentifier) {
+            const bundleId = sampleAny.sourceRevision.source.bundleIdentifier;
+            // Extract app name from bundle ID
+            if (bundleId.includes('ouraring')) {
+              sourceName = 'Oura';
+            } else if (bundleId.includes('eightsleep')) {
+              sourceName = 'Eight Sleep';
+            } else if (bundleId.includes('apple.health')) {
+              sourceName = 'Apple Health';
+            } else {
+              // Use last part of bundle ID as fallback
+              const parts = bundleId.split('.');
+              sourceName = parts[parts.length - 1] || 'Unknown';
+            }
+          }
+          // Try device name as last resort
+          else if (sampleAny.device?.name) {
+            sourceName = sampleAny.device.name;
+          }
+          
+          // Map numeric sleep value to string name for consistency with old table
+          const valueString = getSleepValueString(sleepValue);
+          
           records.push({
             healthkit_uuid: sample.uuid || `sleep_${sample.startDate}_${sample.endDate}`,
             start_time: new Date(sample.startDate).toISOString(),
             end_time: new Date(sample.endDate).toISOString(),
-            source: sample.sourceRevision?.source?.name || 'Unknown',
+            source: sourceName,
             qty: roundTo(durationHours, 2),
-            value: sleepValue,
+            value: valueString,
           });
         }
       }

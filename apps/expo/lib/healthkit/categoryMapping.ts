@@ -79,6 +79,41 @@ export function getSleepValueFromCanonicalType(canonicalType: string): string {
 }
 
 /**
+ * Map HealthKit sleep numeric value to string name for storage.
+ * This matches the format used in the old apple_health_sleep table.
+ */
+export function getSleepValueString(sleepValue: string): string {
+  switch (sleepValue) {
+    case '0':
+    case 'inBed':
+    case 'InBed':
+      return 'In Bed';
+    case '1':
+    case 'asleepUnspecified':
+    case 'Asleep':
+      return 'Asleep';
+    case '2':
+    case 'awake':
+    case 'Awake':
+      return 'Awake';
+    case '3':
+    case 'asleepCore':
+    case 'AsleepCore':
+      return 'Core';
+    case '4':
+    case 'asleepDeep':
+    case 'AsleepDeep':
+      return 'Deep';
+    case '5':
+    case 'asleepREM':
+    case 'AsleepREM':
+      return 'REM';
+    default:
+      return sleepValue; // Return as-is if unknown
+  }
+}
+
+/**
  * Category type identifiers we need permissions for
  */
 export const CATEGORY_TYPE_IDENTIFIERS = [
