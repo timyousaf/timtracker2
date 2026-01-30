@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { colors, fontSizes, fonts, spacing, borderRadius } from '@/lib/theme';
 import { logger } from '@/lib/logger';
+import { resetHealthData } from '@/lib/api';
 
 // Only import HealthKit on iOS
 let healthKit: typeof import('@/lib/healthkit') | null = null;
@@ -246,8 +247,29 @@ export default function SettingsScreen() {
                       onPress={async () => {
                         if (!healthKit || isSyncing) return;
                         logger.info('Settings', 'User initiated Reset & Full Sync');
-                        await healthKit.clearAllAnchors();
-                        handleSync();
+                        setIsSyncing(true);
+                        setSyncProgress('Clearing server data...');
+                        try {
+                          // Clear server-side data first
+                          const resetResult = await resetHealthData(getToken);
+                          logger.info('Settings', 'Server data cleared', resetResult.deleted);
+                          
+                          // Then clear local anchors
+                          await healthKit.clearAllAnchors();
+                          
+                          // Now do full sync
+                          setIsSyncing(false);
+                          handleSync();
+                        } catch (error) {
+                          logger.error('Settings', 'Reset failed', {
+                            error: error instanceof Error ? error.message : String(error),
+                          });
+                          setSyncResult({
+                            success: false,
+                            message: error instanceof Error ? error.message : 'Reset failed',
+                          });
+                          setIsSyncing(false);
+                        }
                       }}
                       disabled={isSyncing}
                     >

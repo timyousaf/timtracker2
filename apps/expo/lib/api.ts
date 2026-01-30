@@ -192,3 +192,26 @@ export async function fetchWeeklySummary(
   const query = searchParams.toString();
   return apiFetch<WeeklySummaryApiResponse>(`/api/weekly-summary${query ? `?${query}` : ''}`, getToken);
 }
+
+/**
+ * Reset health data response
+ */
+export interface ResetHealthDataResponse {
+  success: boolean;
+  deleted: {
+    metrics: number;
+    workouts: number;
+    sleep: number;
+  };
+}
+
+/**
+ * Reset all health data (clear ios_* tables for a full re-sync)
+ */
+export async function resetHealthData(
+  getToken: () => Promise<string | null>
+): Promise<ResetHealthDataResponse> {
+  return apiFetch<ResetHealthDataResponse>('/api/ingest/reset', getToken, {
+    method: 'DELETE',
+  });
+}
