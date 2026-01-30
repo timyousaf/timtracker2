@@ -72,19 +72,53 @@ export async function checkHealthKitAvailable(): Promise<boolean> {
 }
 
 /**
+ * Mapping from our short type identifiers to the full HK identifiers
+ * This is needed because the library requires exact HK identifier strings
+ */
+const QUANTITY_TYPE_TO_HK_IDENTIFIER: Record<string, string> = {
+  // Activity
+  appleExerciseTime: 'HKQuantityTypeIdentifierAppleExerciseTime',
+  appleMoveTime: 'HKQuantityTypeIdentifierAppleMoveTime',
+  distanceWalkingRunning: 'HKQuantityTypeIdentifierDistanceWalkingRunning',
+  runningSpeed: 'HKQuantityTypeIdentifierRunningSpeed',
+  // Body measurements
+  bodyMass: 'HKQuantityTypeIdentifierBodyMass',
+  bodyFatPercentage: 'HKQuantityTypeIdentifierBodyFatPercentage',
+  bodyMassIndex: 'HKQuantityTypeIdentifierBodyMassIndex',
+  leanBodyMass: 'HKQuantityTypeIdentifierLeanBodyMass',
+  waistCircumference: 'HKQuantityTypeIdentifierWaistCircumference',
+  // Heart
+  heartRate: 'HKQuantityTypeIdentifierHeartRate',
+  restingHeartRate: 'HKQuantityTypeIdentifierRestingHeartRate',
+  walkingHeartRateAverage: 'HKQuantityTypeIdentifierWalkingHeartRateAverage',
+  heartRateVariabilitySDNN: 'HKQuantityTypeIdentifierHeartRateVariabilitySDNN',
+  vo2Max: 'HKQuantityTypeIdentifierVO2Max', // Note: VO2 is uppercase
+  // Nutrition
+  dietaryCarbohydrates: 'HKQuantityTypeIdentifierDietaryCarbohydrates',
+  dietaryProtein: 'HKQuantityTypeIdentifierDietaryProtein',
+  dietaryFatTotal: 'HKQuantityTypeIdentifierDietaryFatTotal',
+  dietaryFiber: 'HKQuantityTypeIdentifierDietaryFiber',
+  dietaryEnergyConsumed: 'HKQuantityTypeIdentifierDietaryEnergyConsumed',
+};
+
+const CATEGORY_TYPE_TO_HK_IDENTIFIER: Record<string, string> = {
+  sleepAnalysis: 'HKCategoryTypeIdentifierSleepAnalysis',
+  mindfulSession: 'HKCategoryTypeIdentifierMindfulSession',
+};
+
+/**
  * Request all necessary HealthKit permissions
  */
 export async function requestHealthKitPermissions(): Promise<boolean> {
   try {
     // Build the list of HealthKit type identifiers to request
-    // The library uses HKQuantityTypeIdentifier and HKCategoryTypeIdentifier prefixes
-    const quantityTypes = getQuantityTypeIdentifiers().map(
-      (type) => `HKQuantityTypeIdentifier${type.charAt(0).toUpperCase()}${type.slice(1)}`
-    );
+    const quantityTypes = getQuantityTypeIdentifiers()
+      .map((type) => QUANTITY_TYPE_TO_HK_IDENTIFIER[type])
+      .filter(Boolean);
     
-    const categoryTypes = CATEGORY_TYPE_IDENTIFIERS.map(
-      (type) => `HKCategoryTypeIdentifier${type.charAt(0).toUpperCase()}${type.slice(1)}`
-    );
+    const categoryTypes = CATEGORY_TYPE_IDENTIFIERS
+      .map((type) => CATEGORY_TYPE_TO_HK_IDENTIFIER[type])
+      .filter(Boolean);
     
     // For workouts, use HKWorkoutTypeIdentifier
     const allTypes = [...quantityTypes, ...categoryTypes, 'HKWorkoutTypeIdentifier'];
