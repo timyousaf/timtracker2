@@ -441,8 +441,8 @@ CREATE INDEX idx_ios_sleep_end ON ios_apple_health_sleep(end_time);
 
 ## Rollout Plan
 
-- **Phase 1 (this PRD)**: iOS writes `ios_*` tables only; charts still read old tables.
-- **Phase 2**: Add server-side feature flag to switch analytic endpoints to `ios_*` tables.
+- **Phase 1 (this PRD)**: iOS writes `ios_*` tables only; charts still read old tables. ✅ COMPLETE
+- **Phase 2**: Switch all analytic endpoints to read from `ios_*` tables. ✅ COMPLETE
 - **Phase 3**: Deprecate Drive/GitHub Action pipeline and remove Health Auto Export dependency.
 
 ---
@@ -533,15 +533,41 @@ CREATE INDEX idx_ios_sleep_end ON ios_apple_health_sleep(end_time);
 
 ### Phase 1H: Validation & Testing
 
-- [ ] Run SQL migration against Neon database
-- [ ] Deploy to TestFlight
-- [ ] Run full sync on real device with multi-year health history
-- [ ] Compare `ios_apple_health_metrics` vs `apple_health_metrics` for recent 14 days
-- [ ] Compare `ios_apple_health_workouts` vs `apple_health_workouts` for recent 14 days
-- [ ] Compare `ios_apple_health_sleep` vs `apple_health_sleep` for recent 14 days
-- [ ] Document any discrepancies and root causes
-- [ ] Verify zero duplicates after multiple sync runs
+- [x] Run SQL migration against Neon database
+- [x] Deploy to TestFlight
+- [x] Run full sync on real device with multi-year health history
+- [x] Compare `ios_apple_health_metrics` vs `apple_health_metrics` for recent 14 days
+- [x] Compare `ios_apple_health_workouts` vs `apple_health_workouts` for recent 14 days
+- [x] Compare `ios_apple_health_sleep` vs `apple_health_sleep` for recent 14 days
+- [x] Document any discrepancies and root causes
+- [x] Verify zero duplicates after multiple sync runs
 - [ ] Measure and log sync performance (time for initial sync)
+
+### Phase 1I: Additional Improvements (added during validation)
+
+- [x] Add `DELETE /api/ingest/reset` endpoint to clear `ios_*` tables for true full re-sync
+- [x] Update app's "Reset & Full Sync" button to call reset API before syncing
+- [x] Map sleep numeric values to string names for consistency with old table
+- [x] Extract actual source names for sleep records (Oura, Eight Sleep, etc.)
+
+---
+
+## Phase 2: Migrate Charts to ios_* Tables
+
+### Phase 2A: Update Read Endpoints
+
+- [x] `/api/metrics` → read from `ios_apple_health_metrics`
+- [x] `/api/sleep` → read from `ios_apple_health_sleep`
+- [x] `/api/weekly-workouts` → read from `ios_apple_health_workouts`
+- [x] `/api/weekly-summary` → read from all `ios_*` tables
+- [x] `/api/calendar-heatmap` → read from `ios_*` tables
+- [x] `/api/health-metrics` → read from `ios_apple_health_metrics`
+- [x] `/api/schema` → update metadata to reference `ios_*` tables
+
+### Phase 2B: Handle Data Format Differences
+
+- [x] Update workout type exclusion filter: `'Walk', 'Outdoor Walk'` → `'Walking'`
+  - New HealthKit types use simplified names: "Running" instead of "Indoor Run"/"Outdoor Run"
 
 ---
 
@@ -558,3 +584,5 @@ CREATE INDEX idx_ios_sleep_end ON ios_apple_health_sleep(end_time);
 - 2026-01-27: Initial draft
 - 2026-01-27: Updated with library choice (`@kingstinct/react-native-healthkit`), incremental sync strategy, HealthKit mapping table, detailed implementation checklist
 - 2026-01-28: Implementation complete on `feature/ios-healthkit-ingest` branch. Phases 1A-1F implemented. Remaining: run migration, EAS build, TestFlight testing.
+- 2026-01-30: Phase 1 complete. Validation testing done, sleep value mapping and source extraction fixed, reset API added.
+- 2026-01-30: Phase 2 complete. All chart endpoints migrated to read from `ios_*` tables. Workout type exclusion filter updated for new HealthKit naming.
