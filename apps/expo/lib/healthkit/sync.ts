@@ -176,9 +176,16 @@ async function syncQuantityMetrics(
     });
     
     try {
+      // Get the full HK identifier for this type
+      const hkIdentifier = QUANTITY_TYPE_TO_HK_IDENTIFIER[mapping.healthkitType];
+      if (!hkIdentifier) {
+        logger.warn('HealthKit', `No HK identifier mapping for ${mapping.healthkitType}`);
+        continue;
+      }
+      
       const anchor = await getAnchor(mapping.healthkitType);
       const result = await queryQuantitySamplesWithAnchor(
-        mapping.healthkitType as any,
+        hkIdentifier as any,
         {
           limit: 0, // No limit - get all
           anchor: anchor || undefined,
@@ -236,9 +243,10 @@ async function syncQuantityMetrics(
   });
   
   try {
+    const hrHkIdentifier = QUANTITY_TYPE_TO_HK_IDENTIFIER[HEART_RATE_MAPPING.healthkitType];
     const hrAnchor = await getAnchor(HEART_RATE_MAPPING.healthkitType);
     const hrResult = await queryQuantitySamplesWithAnchor(
-      HEART_RATE_MAPPING.healthkitType as any,
+      hrHkIdentifier as any,
       {
         limit: 0,
         anchor: hrAnchor || undefined,
@@ -321,8 +329,9 @@ async function syncSleep(
   });
   
   try {
+    const sleepHkIdentifier = CATEGORY_TYPE_TO_HK_IDENTIFIER['sleepAnalysis'];
     const anchor = await getAnchor('sleepAnalysis');
-    const result = await queryCategorySamplesWithAnchor('sleepAnalysis' as any, {
+    const result = await queryCategorySamplesWithAnchor(sleepHkIdentifier as any, {
       limit: 0,
       anchor: anchor || undefined,
     });
@@ -361,9 +370,10 @@ async function syncSleep(
   
   // Also sync mindful minutes to metrics
   try {
+    const mindfulHkIdentifier = CATEGORY_TYPE_TO_HK_IDENTIFIER[MINDFUL_MAPPING.healthkitType];
     const mindfulAnchor = await getAnchor(MINDFUL_MAPPING.healthkitType);
     const mindfulResult = await queryCategorySamplesWithAnchor(
-      MINDFUL_MAPPING.healthkitType as any,
+      mindfulHkIdentifier as any,
       {
         limit: 0,
         anchor: mindfulAnchor || undefined,
