@@ -60,8 +60,10 @@ export async function POST(request: NextRequest) {
   try {
     const userId = await getUserId();
     if (!userId) {
+      console.log('[daily-meal-scores] Auth failed - no userId returned');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    console.log('[daily-meal-scores] Auth successful, userId:', userId);
 
     const body = await request.json();
     const { date, health_score, health_comment } = body;

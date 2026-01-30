@@ -11,24 +11,50 @@ export type AuthResult =
  * Use this in API routes to identify the caller.
  */
 export async function getAuth(): Promise<AuthResult> {
-  const headersList = await headers();
+  try {
+    const headersList = await headers();
 
-  // Check for GPT API key auth
-  const authHeader = headersList.get('authorization') || '';
-  if (authHeader.startsWith('Bearer ')) {
-    const token = authHeader.slice(7);
-    if (process.env.GPT_API_KEY && token === process.env.GPT_API_KEY) {
-      return { type: 'gpt', userId: 'chatgpt-system' };
+    // Check for GPT API key auth
+    const authHeader = headersList.get('authorization') || '';
+    
+    if (authHeader.startsWith('Bearer ')) {
+      const token = authHeader.slice(7);
+      const gptApiKey = process.env.GPT_API_KEY;
+      
+      if (gptApiKey && token === gptApiKey) {
+        return { type: 'gpt', userId: 'chatgpt-system' };
+      }
+      
+      // Log auth failure details for debugging (without exposing tokens)
+      if (gptApiKey) {
+        console.log('[Auth] Bearer token provided but did not match GPT_API_KEY', {
+          tokenLength: token.length,
+          expectedLength: gptApiKey.length,
+          tokenPrefix: token.substring(0, 4),
+          expectedPrefix: gptApiKey.substring(0, 4),
+        });
+      } else {
+        console.log('[Auth] Bearer token provided but GPT_API_KEY is not set');
+      }
     }
-  }
 
-  // Otherwise use Clerk
-  const { userId } = await auth();
-  if (userId) {
-    return { type: 'clerk', userId };
-  }
+    // Otherwise use Clerk
+    const { userId } = await auth();
+    if (userId) {
+      return { type: 'clerk', userId };
+    }
 
-  return null;
+    // Log when no auth found
+    console.log('[Auth] No valid auth found', {
+      hasAuthHeader: !!authHeader,
+      authHeaderType: authHeader ? authHeader.split(' ')[0] : 'none',
+    });
+
+    return null;
+  } catch (error) {
+    console.error('[Auth] Error during authentication:', error);
+    return null;
+  }
 }
 
 /**
