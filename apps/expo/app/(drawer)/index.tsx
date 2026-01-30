@@ -42,7 +42,7 @@ import {
   fetchExerciseProgress,
   fetchWeeklySummary,
 } from '@/lib/api';
-import { getCachedData, setCachedData, makeCacheKey } from '@/lib/dataCache';
+import { getCachedData, setCachedData, clearAllCache, makeCacheKey } from '@/lib/dataCache';
 import { runFullSync, isSyncNeeded } from '@/lib/syncService';
 
 // Import local ECharts-based components (cross-platform)
@@ -75,6 +75,7 @@ export default function HomeScreen() {
   const { getToken } = useAuth();
   const navigation = useNavigation();
   const [refreshing, setRefreshing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -345,18 +346,47 @@ export default function HomeScreen() {
 
   /**
    * Full refresh: run health sync, then load fresh API data
+   * With timeout protection and status updates
    */
-  const doFullRefresh = useCallback(async (showLoadingSpinners = false) => {
+  const doFullRefresh = useCallback(async (showLoadingSpinners = false, showStatus = false, clearCache = false) => {
+    const SYNC_TIMEOUT_MS = 60000; // 60 second timeout
+    
     try {
-      // Step 1: Run health sync (pushes data to server)
-      await runFullSync(getToken, { force: true });
+      // Step 1: Run health sync (pushes data to server) with timeout
+      if (showStatus) setSyncStatus('Syncing health data...');
       
-      // Step 2: Load fresh data from API
+      const syncPromise = runFullSync(getToken, { 
+        force: true,
+        onProgress: showStatus ? setSyncStatus : undefined,
+      });
+      
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Sync timeout')), SYNC_TIMEOUT_MS);
+      });
+      
+      try {
+        await Promise.race([syncPromise, timeoutPromise]);
+      } catch (err) {
+        console.warn('Sync error or timeout:', err);
+        // Continue to load data even if sync failed/timed out
+      }
+      
+      // Step 2: Clear client-side cache if requested (e.g., on pull-to-refresh)
+      // This ensures we get fresh data from the API
+      if (clearCache) {
+        await clearAllCache();
+        setHasCachedData(false);
+      }
+      
+      // Step 3: Load fresh data from API
+      if (showStatus) setSyncStatus('Loading charts...');
       await loadAllData(selectedRange, showLoadingSpinners);
       
       lastForegroundSync.current = Date.now();
     } catch (err) {
       console.error('Full refresh error:', err);
+    } finally {
+      setSyncStatus(null);
     }
   }, [getToken, loadAllData, selectedRange]);
 
@@ -416,7 +446,7 @@ export default function HomeScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await doFullRefresh(false); // Don't show loading spinners, refresh control is visible
+    await doFullRefresh(false, true, true); // Show status, clear cache for fresh data
     setRefreshing(false);
   }, [doFullRefresh]);
 
@@ -514,6 +544,14 @@ export default function HomeScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Sync Status Banner */}
+      {syncStatus && (
+        <View style={styles.syncBanner}>
+          <ActivityIndicator size="small" color={colors.primary} style={styles.syncSpinner} />
+          <Text style={styles.syncText}>{syncStatus}</Text>
+        </View>
+      )}
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -789,5 +827,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[2], // Minimal horizontal padding (8px)
     paddingTop: spacing[3],
     paddingBottom: spacing[8],
+  },
+  syncBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[4],
+  },
+  syncSpinner: {
+    marginRight: spacing[2],
+  },
+  syncText: {
+    fontSize: fontSizes.sm,
+    color: colors.foregroundMuted,
+    fontFamily: fonts.regular,
   },
 });
