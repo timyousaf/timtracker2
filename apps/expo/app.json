@@ -12,7 +12,8 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.timtracker.app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": ["fetch"]
       }
     },
     "android": {

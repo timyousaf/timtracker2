@@ -2,13 +2,14 @@ import 'react-native-gesture-handler';
 import { ClerkProvider, ClerkLoaded, useAuth } from '@clerk/clerk-expo';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Geist_400Regular } from '@expo-google-fonts/geist';
 import { tokenCache } from '@/lib/tokenCache';
 import { colors } from '@/lib/theme';
+import { registerBackgroundSync, setTokenGetter } from '@/lib/backgroundSync';
 
 // Keep splash screen visible while loading fonts
 SplashScreen.preventAutoHideAsync();
@@ -23,9 +24,24 @@ if (!publishableKey) {
  * Auth guard that redirects based on authentication state
  */
 function AuthGuard() {
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn, getToken } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+
+  // Set up background sync when signed in
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+
+    // Set the token getter for background sync
+    setTokenGetter(getToken);
+
+    // Register background sync on iOS
+    if (Platform.OS === 'ios') {
+      registerBackgroundSync().then((success) => {
+        console.log('[BackgroundSync] Registration:', success ? 'success' : 'failed');
+      });
+    }
+  }, [isLoaded, isSignedIn, getToken]);
 
   useEffect(() => {
     if (!isLoaded) return;

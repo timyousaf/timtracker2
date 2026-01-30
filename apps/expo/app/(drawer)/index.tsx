@@ -1,5 +1,5 @@
 import { useAuth } from '@clerk/clerk-expo';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   RefreshControl,
   TouchableOpacity,
   Modal,
+  AppState,
+  AppStateStatus,
 } from 'react-native';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
@@ -40,6 +42,8 @@ import {
   fetchExerciseProgress,
   fetchWeeklySummary,
 } from '@/lib/api';
+import { getCachedData, setCachedData, makeCacheKey } from '@/lib/dataCache';
+import { runFullSync, isSyncNeeded } from '@/lib/syncService';
 
 // Import local ECharts-based components (cross-platform)
 import {
@@ -126,7 +130,7 @@ export default function HomeScreen() {
   const [exerciseOffset, setExerciseOffset] = useState(0);
   const [mealOffset, setMealOffset] = useState(0);
 
-  // Loading states
+  // Loading states - only for initial load, not for background refresh
   const [loadingCore, setLoadingCore] = useState(true);
   const [loadingHealth, setLoadingHealth] = useState(true);
   const [loadingExercise, setLoadingExercise] = useState(true);
@@ -134,19 +138,111 @@ export default function HomeScreen() {
 
   // Track if initial load is complete to avoid duplicate fetches
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  
+  // Track if we have any cached data to show
+  const [hasCachedData, setHasCachedData] = useState(false);
 
   // Picker modal state
   const [pickerVisible, setPickerVisible] = useState(false);
+  
+  // AppState for foreground sync
+  const appState = useRef(AppState.currentState);
+  const lastForegroundSync = useRef<number>(0);
 
-  const loadAllData = useCallback(async (range: DateRange) => {
+  /**
+   * Load cached data from AsyncStorage for immediate display
+   */
+  const loadCachedData = useCallback(async (range: DateRange) => {
+    const dateRange = formatDateRangeForApi(range);
+    const cacheKeyBase = `charts_${range}`;
+    
+    try {
+      const cached = await getCachedData<{
+        weeklySummary: WeeklySummaryData | null;
+        sleepData: SleepDataPoint[];
+        mindfulHeatmap: CalendarHeatmapData | null;
+        exerciseHeatmap: CalendarHeatmapData | null;
+        strengthVolume: StrengthVolumeData | null;
+        mealHeatmap: CalendarHeatmapData | null;
+        waistData: HealthChartDataPoint[];
+        weightData: HealthChartDataPoint[];
+        restingHRData: HealthChartDataPoint[];
+        hrvData: HealthChartDataPoint[];
+        weeklyWorkouts: WeeklyWorkoutsData | null;
+        distanceData: HealthChartDataPoint[];
+        exerciseProgressData: Record<string, ExerciseProgressDataPoint[]>;
+      }>(cacheKeyBase);
+      
+      if (cached) {
+        setWeeklySummary(cached.weeklySummary);
+        setSleepData(cached.sleepData);
+        setMindfulHeatmap(cached.mindfulHeatmap);
+        setExerciseHeatmap(cached.exerciseHeatmap);
+        setStrengthVolume(cached.strengthVolume);
+        setMealHeatmap(cached.mealHeatmap);
+        setWaistData(cached.waistData);
+        setWeightData(cached.weightData);
+        setRestingHRData(cached.restingHRData);
+        setHrvData(cached.hrvData);
+        setWeeklyWorkouts(cached.weeklyWorkouts);
+        setDistanceData(cached.distanceData);
+        setExerciseProgressData(cached.exerciseProgressData);
+        setHasCachedData(true);
+        
+        // Hide loading spinners since we have cached data
+        setLoadingCore(false);
+        setLoadingHealth(false);
+        setLoadingExercise(false);
+        setLoadingStrength(false);
+        
+        return true;
+      }
+    } catch (e) {
+      console.warn('Error loading cached data:', e);
+    }
+    return false;
+  }, []);
+
+  /**
+   * Fetch fresh data from API and cache it
+   * Now properly awaits all promises
+   */
+  const loadAllData = useCallback(async (range: DateRange, showLoading = true) => {
     setError(null);
     const tokenGetter = getToken;
     const dateRange = formatDateRangeForApi(range);
+    const cacheKeyBase = `charts_${range}`;
+
+    // Only show loading spinners if we don't have cached data
+    if (showLoading && !hasCachedData) {
+      setLoadingCore(true);
+      setLoadingHealth(true);
+      setLoadingExercise(true);
+      setLoadingStrength(true);
+    }
 
     try {
-      // ===== SECTION 1: CORE METRICS =====
-      setLoadingCore(true);
-      Promise.all([
+      // Fetch all data in parallel, properly awaited
+      const [
+        // Core metrics
+        summary,
+        sleep,
+        mindful,
+        exercise,
+        strength,
+        meal,
+        waist,
+        weight,
+        // Health details
+        restingHR,
+        hrv,
+        // Exercise details
+        workouts,
+        distance,
+        // Strength progress
+        ...exerciseResults
+      ] = await Promise.all([
+        // Core
         fetchWeeklySummary(tokenGetter, { offset: summaryOffset }).catch(() => null),
         fetchSleep(tokenGetter, dateRange).catch(() => ({ data: [] })),
         fetchCalendarHeatmap(tokenGetter, { type: 'mindful', offset: mindfulOffset }).catch(() => null),
@@ -155,56 +251,70 @@ export default function HomeScreen() {
         fetchCalendarHeatmap(tokenGetter, { type: 'meal', offset: mealOffset }).catch(() => null),
         fetchMetrics(tokenGetter, { type: 'Waist Circumference (in)', ...dateRange }).catch(() => ({ data: [] })),
         fetchMetrics(tokenGetter, { type: 'Weight/Body Mass (lb)', ...dateRange }).catch(() => ({ data: [] })),
-      ]).then(([summary, sleep, mindful, exercise, strength, meal, waist, weight]) => {
-        setWeeklySummary(summary);
-        setSleepData(sleep.data);
-        setMindfulHeatmap(mindful);
-        setExerciseHeatmap(exercise);
-        setStrengthVolume(strength);
-        setMealHeatmap(meal);
-        setWaistData(waist.data);
-        setWeightData(weight.data);
-      }).finally(() => setLoadingCore(false));
-
-      // ===== SECTION 2: HEALTH DETAILS =====
-      setLoadingHealth(true);
-      Promise.all([
+        // Health
         fetchMetrics(tokenGetter, { type: 'Resting Heart Rate (bpm)', ...dateRange }).catch(() => ({ data: [] })),
         fetchMetrics(tokenGetter, { type: 'Heart Rate Variability (ms)', ...dateRange }).catch(() => ({ data: [] })),
-      ]).then(([restingHR, hrv]) => {
-        setRestingHRData(restingHR.data);
-        setHrvData(hrv.data);
-      }).finally(() => setLoadingHealth(false));
-
-      // ===== SECTION 3: EXERCISE DETAILS =====
-      setLoadingExercise(true);
-      Promise.all([
+        // Exercise
         fetchWeeklyWorkouts(tokenGetter, dateRange).catch(() => null),
         fetchMetrics(tokenGetter, { type: 'Walking + Running Distance (mi)', ...dateRange }).catch(() => ({ data: [] })),
-      ]).then(([workouts, distance]) => {
-        setWeeklyWorkouts(workouts);
-        setDistanceData(distance.data);
-      }).finally(() => setLoadingExercise(false));
-
-      // ===== SECTION 4: STRENGTH =====
-      setLoadingStrength(true);
-      Promise.all(
-        EXERCISES.map(ex => 
+        // Strength (spread into results)
+        ...EXERCISES.map(ex => 
           fetchExerciseProgress(tokenGetter, { exercise: ex.name, ...dateRange })
             .then(res => ({ name: ex.name, data: res.data }))
-            .catch(() => ({ name: ex.name, data: [] }))
-        )
-      ).then(results => {
-        const progressMap: Record<string, ExerciseProgressDataPoint[]> = {};
-        results.forEach(r => { progressMap[r.name] = r.data; });
-        setExerciseProgressData(progressMap);
-      }).finally(() => setLoadingStrength(false));
+            .catch(() => ({ name: ex.name, data: [] as ExerciseProgressDataPoint[] }))
+        ),
+      ]);
+
+      // Build exercise progress map
+      const progressMap: Record<string, ExerciseProgressDataPoint[]> = {};
+      exerciseResults.forEach((r: { name: string; data: ExerciseProgressDataPoint[] }) => {
+        progressMap[r.name] = r.data;
+      });
+
+      // Update all state
+      setWeeklySummary(summary);
+      setSleepData(sleep.data);
+      setMindfulHeatmap(mindful);
+      setExerciseHeatmap(exercise);
+      setStrengthVolume(strength);
+      setMealHeatmap(meal);
+      setWaistData(waist.data);
+      setWeightData(weight.data);
+      setRestingHRData(restingHR.data);
+      setHrvData(hrv.data);
+      setWeeklyWorkouts(workouts);
+      setDistanceData(distance.data);
+      setExerciseProgressData(progressMap);
+      
+      setHasCachedData(true);
+
+      // Cache the data for next time
+      await setCachedData(cacheKeyBase, {
+        weeklySummary: summary,
+        sleepData: sleep.data,
+        mindfulHeatmap: mindful,
+        exerciseHeatmap: exercise,
+        strengthVolume: strength,
+        mealHeatmap: meal,
+        waistData: waist.data,
+        weightData: weight.data,
+        restingHRData: restingHR.data,
+        hrvData: hrv.data,
+        weeklyWorkouts: workouts,
+        distanceData: distance.data,
+        exerciseProgressData: progressMap,
+      });
 
     } catch (err) {
       console.error('Error loading chart data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load charts');
+    } finally {
+      setLoadingCore(false);
+      setLoadingHealth(false);
+      setLoadingExercise(false);
+      setLoadingStrength(false);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [getToken, summaryOffset, mindfulOffset, exerciseOffset, mealOffset, hasCachedData]);
 
   // Reload heatmaps when offsets change (but not on initial load)
   useEffect(() => {
@@ -233,22 +343,85 @@ export default function HomeScreen() {
       .then(setMealHeatmap).catch(console.error);
   }, [mealOffset]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Load data when date range changes
+  /**
+   * Full refresh: run health sync, then load fresh API data
+   */
+  const doFullRefresh = useCallback(async (showLoadingSpinners = false) => {
+    try {
+      // Step 1: Run health sync (pushes data to server)
+      await runFullSync(getToken, { force: true });
+      
+      // Step 2: Load fresh data from API
+      await loadAllData(selectedRange, showLoadingSpinners);
+      
+      lastForegroundSync.current = Date.now();
+    } catch (err) {
+      console.error('Full refresh error:', err);
+    }
+  }, [getToken, loadAllData, selectedRange]);
+
+  // Initial load: show cached data immediately, then refresh in background
   useEffect(() => {
-    setLoading(true);
-    loadAllData(selectedRange).finally(() => {
-      setLoading(false);
-      setInitialLoadComplete(true);
-    });
+    const initializeData = async () => {
+      setLoading(true);
+      
+      // First, try to load cached data for immediate display
+      const hadCache = await loadCachedData(selectedRange);
+      
+      if (hadCache) {
+        // We have cached data, hide loading and refresh in background
+        setLoading(false);
+        setInitialLoadComplete(true);
+        
+        // Background refresh (no loading spinners)
+        doFullRefresh(false);
+      } else {
+        // No cache, need to wait for fresh data
+        await doFullRefresh(true);
+        setLoading(false);
+        setInitialLoadComplete(true);
+      }
+    };
+
+    initializeData();
   }, [selectedRange]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Handle app returning to foreground - sync if needed
+  useEffect(() => {
+    const handleAppStateChange = async (nextAppState: AppStateStatus) => {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === 'active'
+      ) {
+        // App came to foreground
+        const timeSinceLastSync = Date.now() - lastForegroundSync.current;
+        const fiveMinutes = 5 * 60 * 1000;
+        
+        // Only sync if it's been more than 5 minutes since last sync
+        if (timeSinceLastSync > fiveMinutes) {
+          console.log('[HomeScreen] App foregrounded, running background sync');
+          doFullRefresh(false); // No loading spinners
+        }
+      }
+      
+      appState.current = nextAppState;
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    return () => {
+      subscription.remove();
+    };
+  }, [doFullRefresh]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadAllData(selectedRange);
+    await doFullRefresh(false); // Don't show loading spinners, refresh control is visible
     setRefreshing(false);
-  }, [loadAllData, selectedRange]);
+  }, [doFullRefresh]);
 
-  if (loading && !weightData.length) {
+  // Only show full-screen loading if we have no cached data yet
+  if (loading && !hasCachedData) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={colors.foregroundMuted} />
