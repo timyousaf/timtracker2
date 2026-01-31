@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     width: ICON_COLUMN_WIDTH,
-    // No zIndex - icons should be behind tooltips which render on top
+    zIndex: 1, // Low zIndex so icons appear above chart but below tooltips (which have higher zIndex)
     flexDirection: 'column',
   },
   iconCell: {
