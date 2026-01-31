@@ -74,7 +74,6 @@ const TIMTRACKER_GPT_URL =
 export default function HomeScreen() {
   const { getToken } = useAuth();
   const navigation = useNavigation();
-  const [refreshing, setRefreshing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -442,9 +441,8 @@ export default function HomeScreen() {
   }, [doFullRefresh]);
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await doFullRefresh(false, true); // Show status banner, no loading spinners
-    setRefreshing(false);
+    // Show sync status banner for feedback (no big spinner)
+    await doFullRefresh(false, true);
   }, [doFullRefresh]);
 
   // Only show full-screen loading if we have no cached data yet
@@ -553,7 +551,8 @@ export default function HomeScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          // Pass refreshing={false} to hide the big spinner - we use the sync status banner instead
+          <RefreshControl refreshing={false} onRefresh={onRefresh} />
         }
       >
         {/* ===== SECTION 1: CORE METRICS ===== */}

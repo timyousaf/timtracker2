@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     width: ICON_COLUMN_WIDTH,
-    zIndex: 10,
+    // No zIndex - icons should be behind tooltips which render on top
     flexDirection: 'column',
   },
   iconCell: {
