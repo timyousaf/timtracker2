@@ -42,7 +42,7 @@ import {
   fetchExerciseProgress,
   fetchWeeklySummary,
 } from '@/lib/api';
-import { getCachedData, setCachedData, clearAllCache, makeCacheKey } from '@/lib/dataCache';
+import { getCachedData, setCachedData, makeCacheKey } from '@/lib/dataCache';
 import { runFullSync, isSyncNeeded } from '@/lib/syncService';
 
 // Import local ECharts-based components (cross-platform)
@@ -214,8 +214,10 @@ export default function HomeScreen() {
     const dateRange = formatDateRangeForApi(range);
     const cacheKeyBase = `charts_${range}`;
 
-    // Only show loading spinners if we don't have cached data
-    if (showLoading && !hasCachedData) {
+    // Only show loading spinners on initial load when we have NO data at all
+    // Once we have data displayed (initialLoadComplete), never show chart loading spinners
+    // This ensures the user always sees data, with background refresh happening silently
+    if (showLoading && !initialLoadComplete && !hasCachedData) {
       setLoadingCore(true);
       setLoadingHealth(true);
       setLoadingExercise(true);
@@ -315,7 +317,7 @@ export default function HomeScreen() {
       setLoadingExercise(false);
       setLoadingStrength(false);
     }
-  }, [getToken, summaryOffset, mindfulOffset, exerciseOffset, mealOffset, hasCachedData]);
+  }, [getToken, summaryOffset, mindfulOffset, exerciseOffset, mealOffset, hasCachedData, initialLoadComplete]);
 
   // Reload heatmaps when offsets change (but not on initial load)
   useEffect(() => {
@@ -348,7 +350,7 @@ export default function HomeScreen() {
    * Full refresh: run health sync, then load fresh API data
    * With timeout protection and status updates
    */
-  const doFullRefresh = useCallback(async (showLoadingSpinners = false, showStatus = false, clearCache = false) => {
+  const doFullRefresh = useCallback(async (showLoadingSpinners = false, showStatus = false) => {
     const SYNC_TIMEOUT_MS = 60000; // 60 second timeout
     
     try {
@@ -371,14 +373,9 @@ export default function HomeScreen() {
         // Continue to load data even if sync failed/timed out
       }
       
-      // Step 2: Clear client-side cache if requested (e.g., on pull-to-refresh)
-      // This ensures we get fresh data from the API
-      if (clearCache) {
-        await clearAllCache();
-        setHasCachedData(false);
-      }
-      
-      // Step 3: Load fresh data from API
+      // Step 2: Load fresh data from API (always fetch fresh, never show big spinners during refresh)
+      // Note: We removed the clearCache option - data is always persisted locally
+      // and we always fetch fresh data from the API after sync
       if (showStatus) setSyncStatus('Loading charts...');
       await loadAllData(selectedRange, showLoadingSpinners);
       
@@ -446,7 +443,7 @@ export default function HomeScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await doFullRefresh(false, true, true); // Show status, clear cache for fresh data
+    await doFullRefresh(false, true); // Show status banner, no loading spinners
     setRefreshing(false);
   }, [doFullRefresh]);
 
