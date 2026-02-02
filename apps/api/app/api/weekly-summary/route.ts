@@ -167,16 +167,15 @@ export async function GET(request: NextRequest) {
     }
 
     // 4. Fetch mindful minutes
-    // Convert to Eastern time before extracting date to handle late-night entries correctly
+    // Note: Date is stored in local timezone by the iOS app (fixed in aggregation.ts)
     const mindfulResult = await pool.query<{
       date: string;
       value: number;
     }>(
-      `SELECT (date AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York')::date::text as date, value
+      `SELECT date::date::text as date, value
        FROM ios_apple_health_metrics
        WHERE type = 'Mindful Minutes (min)'
-         AND (date AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York')::date >= $1
-         AND (date AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York')::date <= $2`,
+         AND date >= $1 AND date <= $2`,
       [startDateStr, endDateStr]
     );
 

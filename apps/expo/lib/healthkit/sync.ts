@@ -584,7 +584,8 @@ async function syncSleep(
       
       // Accumulate into daily totals
       for (const sample of mindfulResult.samples) {
-        const dateKey = new Date(sample.startDate).toISOString().split('T')[0];
+        // Use getDateString for local timezone date, not UTC
+        const dateKey = getDateString(sample.startDate);
         const durationMinutes = calculateDurationHours(sample.startDate, sample.endDate) * 60;
         const existing = dailyMindfulMap.get(dateKey) || 0;
         dailyMindfulMap.set(dateKey, existing + durationMinutes);

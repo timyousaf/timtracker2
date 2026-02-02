@@ -393,15 +393,16 @@ export function WeeklySummaryChart({
       </View>
       
       <View style={styles.chartWrapper}>
-        {/* Icon column overlay - positioned absolutely over the chart area */}
+        {/* Icon column rendered FIRST so chart (with tooltips) renders on top */}
         <View style={[styles.iconColumn, { top: gridTop, height: gridHeight }]}>
-          {/* Icons from top to bottom: Exercise, Diet, Sleep, Mindful (reversed from ROW_ICONS) */}
+          {/* Icons from top to bottom: Exercise, Diet, Sleep, Mindful */}
           {[Dumbbell, Utensils, BedDouble, Brain].map((Icon, index) => (
             <View key={index} style={[styles.iconCell, { height: cellHeight }]}>
               <Icon size={16} color={colors.foregroundMuted} strokeWidth={1.5} />
             </View>
           ))}
         </View>
+        {/* Chart rendered AFTER icons so tooltips appear on top */}
         <EChart option={optionWithColors} height={chartHeight} />
       </View>
     </View>
@@ -464,8 +465,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     width: ICON_COLUMN_WIDTH,
-    zIndex: 1, // Low zIndex so icons appear above chart but below tooltips (which have higher zIndex)
     flexDirection: 'column',
+    // No zIndex - icons render first, chart renders on top with tooltips
   },
   iconCell: {
     justifyContent: 'center',
