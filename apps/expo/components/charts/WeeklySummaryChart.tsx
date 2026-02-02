@@ -208,8 +208,8 @@ export function WeeklySummaryChart({
         },
       },
       grid: {
-        left: ICON_COLUMN_WIDTH + 4, // Space for icons rendered via RN
-        right: 4, // Reduced to prevent overflow
+        left: 4, // Icons are beside chart now, not overlaid
+        right: 4,
         top: 30,
         bottom: 10,
         containLabel: false,
@@ -393,8 +393,9 @@ export function WeeklySummaryChart({
       </View>
       
       <View style={styles.chartWrapper}>
-        {/* Icon column rendered FIRST so chart (with tooltips) renders on top */}
-        <View style={[styles.iconColumn, { top: gridTop, height: gridHeight }]}>
+        {/* Icon column - uses flexbox, beside chart (not overlaid) */}
+        {/* This ensures icons don't interfere with tooltips */}
+        <View style={[styles.iconColumn, { marginTop: gridTop, height: gridHeight }]}>
           {/* Icons from top to bottom: Exercise, Diet, Sleep, Mindful */}
           {[Dumbbell, Utensils, BedDouble, Brain].map((Icon, index) => (
             <View key={index} style={[styles.iconCell, { height: cellHeight }]}>
@@ -402,8 +403,10 @@ export function WeeklySummaryChart({
             </View>
           ))}
         </View>
-        {/* Chart rendered AFTER icons so tooltips appear on top */}
-        <EChart option={optionWithColors} height={chartHeight} />
+        {/* Chart beside icons - no overlap */}
+        <View style={styles.chartContainer}>
+          <EChart option={optionWithColors} height={chartHeight} />
+        </View>
       </View>
     </View>
   );
@@ -459,14 +462,16 @@ const styles = StyleSheet.create({
     color: colors.foregroundSubtle,
   },
   chartWrapper: {
-    position: 'relative',
+    flexDirection: 'row', // Icons beside chart, not overlaid
+    alignItems: 'flex-start',
   },
   iconColumn: {
-    position: 'absolute',
-    left: 0,
     width: ICON_COLUMN_WIDTH,
     flexDirection: 'column',
-    // No zIndex - icons render first, chart renders on top with tooltips
+    // No absolute positioning - icons are beside the chart
+  },
+  chartContainer: {
+    flex: 1, // Take remaining width after icons
   },
   iconCell: {
     justifyContent: 'center',
